@@ -11,8 +11,8 @@
 	<groupId>com.github.caetanoog18</groupId>
 	<artifactId>conectatea-api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
+	<name>ConectaTEA API</name>
+	<description>Backend API for multiprofessional student support</description>
 	<url/>
 	<licenses>
 		<license/>

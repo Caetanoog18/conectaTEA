@@ -1,9 +1,20 @@
 services:
   postgres:
-    image: 'postgres:latest'
+    image: postgres:17-alpine
+    container_name: conectatea-postgres
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      POSTGRES_DB: ${POSTGRES_DB:-conectatea}
+      POSTGRES_USER: ${POSTGRES_USER:-conectatea}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-conectatea}
     ports:
-      - '5432'
+      - "5432:5432"
+    volumes:
+      - conectatea-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  conectatea-postgres-data:

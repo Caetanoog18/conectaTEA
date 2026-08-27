@@ -13,10 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(TestcontainersConfiguration.class)
-@SpringBootTest
+@SpringBootTest(properties = {
+        "app.security.jwt.secret=" + "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+})
 @Transactional
 class UserRepositoryIntegrationTest {
-
     @Autowired
     private UserRepository userRepository;
 

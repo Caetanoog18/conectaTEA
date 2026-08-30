@@ -14,7 +14,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(properties = {
-        "app.security.jwt.secret=" + "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        "app.security.jwt.secret=" +
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "app.bootstrap.admin.email=",
+        "app.bootstrap.admin.password="
 })
 @Transactional
 class UserRepositoryIntegrationTest {

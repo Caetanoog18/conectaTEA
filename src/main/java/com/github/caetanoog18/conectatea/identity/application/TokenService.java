@@ -36,8 +36,9 @@ public class TokenService {
 
         List<String> roles = authentication.getAuthorities()
                 .stream()
-                .map(authority -> authority.getAuthority()
-                        .replaceFirst("^ROLE_", ""))
+                .map(authority -> authority.getAuthority())
+                .filter(authority -> authority.startsWith("ROLE_"))
+                .map(authority -> authority.substring("ROLE_".length()))
                 .toList();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()

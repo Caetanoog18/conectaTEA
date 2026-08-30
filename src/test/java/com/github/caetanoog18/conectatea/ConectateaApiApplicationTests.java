@@ -6,7 +6,10 @@ import org.springframework.context.annotation.Import;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(properties = {
-		"app.security.jwt.secret=" + "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        "app.security.jwt.secret=" +
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "app.bootstrap.admin.email=",
+        "app.bootstrap.admin.password="
 })
 class ConectateaApiApplicationTests {
     @Test

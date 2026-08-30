@@ -12,11 +12,15 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+
+import java.util.UUID;
 
 
 @Import(TestcontainersConfiguration.class)
@@ -122,5 +126,23 @@ class UserManagementIntegrationTest {
                                 .content(requestBody)
                 )
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void statusUpdateWithoutActiveShouldBeRejected() throws Exception {
+        mockMvc.perform(
+                        patch(
+                                "/api/users/{userId}/status",
+                                UUID.randomUUID()
+                        )
+                                .with(jwt().authorities(
+                                        new SimpleGrantedAuthority(
+                                                "ROLE_ADMINISTRATOR"
+                                        )
+                                ))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andExpect(status().isBadRequest());
     }
 }

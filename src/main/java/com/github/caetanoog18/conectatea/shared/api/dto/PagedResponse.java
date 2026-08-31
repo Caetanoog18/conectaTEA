@@ -1,4 +1,4 @@
-package com.github.caetanoog18.conectatea.identity.api.dto;
+package com.github.caetanoog18.conectatea.shared.api.dto;
 
 import org.springframework.data.domain.Page;
 

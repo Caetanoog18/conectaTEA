@@ -1,7 +1,7 @@
 package com.github.caetanoog18.conectatea.identity.api;
 
 import com.github.caetanoog18.conectatea.identity.api.dto.CreateUserRequest;
-import com.github.caetanoog18.conectatea.identity.api.dto.PagedResponse;
+import com.github.caetanoog18.conectatea.shared.api.dto.PagedResponse;
 import com.github.caetanoog18.conectatea.identity.api.dto.UpdateUserStatusRequest;
 import com.github.caetanoog18.conectatea.identity.api.dto.UserResponse;
 import com.github.caetanoog18.conectatea.identity.application.UserService;

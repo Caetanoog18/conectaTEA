@@ -61,9 +61,7 @@ public class Institution {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    protected Institution() {}
-
-    public Institution(
+    public void update(
             String name,
             String taxId,
             String email,
@@ -87,6 +85,37 @@ public class Institution {
         this.city = city.trim();
         this.state = state.trim().toUpperCase(Locale.ROOT);
         this.postalCode = normalizeDigits(postalCode);
+    }
+
+    protected Institution() {
+    }
+
+    public Institution(
+            String name,
+            String taxId,
+            String email,
+            String phone,
+            String street,
+            String addressNumber,
+            String complement,
+            String district,
+            String city,
+            String state,
+            String postalCode
+    ) {
+        update(
+                name,
+                taxId,
+                email,
+                phone,
+                street,
+                addressNumber,
+                complement,
+                district,
+                city,
+                state,
+                postalCode
+        );
     }
 
     public UUID getId() {

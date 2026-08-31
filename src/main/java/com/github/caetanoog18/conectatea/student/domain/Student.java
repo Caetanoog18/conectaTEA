@@ -56,7 +56,7 @@ public class Student {
     protected Student() {
     }
 
-    public Student(
+    public void update(
             String fullName,
             String preferredName,
             LocalDate birthDate,
@@ -74,6 +74,27 @@ public class Student {
         this.schoolYear = schoolYear;
         this.gradeLevel = gradeLevel.trim();
         this.className = normalizeOptionalText(className);
+    }
+
+    public Student(
+            String fullName,
+            String preferredName,
+            LocalDate birthDate,
+            String enrollmentNumber,
+            int schoolYear,
+            String gradeLevel,
+            String className
+    ) {
+        update(
+                fullName,
+                preferredName,
+                birthDate,
+                enrollmentNumber,
+                schoolYear,
+                gradeLevel,
+                className
+        );
+
         this.active = true;
     }
 

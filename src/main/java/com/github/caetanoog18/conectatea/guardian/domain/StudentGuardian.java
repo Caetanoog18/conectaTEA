@@ -54,6 +54,12 @@ public class StudentGuardian {
     protected StudentGuardian() {
     }
 
+    public void update(GuardianRelationship relationship, boolean legalGuardian, boolean primaryContact) {
+        this.relationship = relationship;
+        this.legalGuardian = legalGuardian;
+        this.primaryContact = primaryContact;
+    }
+
     public StudentGuardian(
             Student student,
             Guardian guardian,
@@ -63,9 +69,7 @@ public class StudentGuardian {
     ) {
         this.student = student;
         this.guardian = guardian;
-        this.relationship = relationship;
-        this.legalGuardian = legalGuardian;
-        this.primaryContact = primaryContact;
+        update(relationship, legalGuardian, primaryContact);
     }
 
     public UUID getId() {

@@ -99,10 +99,9 @@ public class ConsentTerm {
     }
 
     public void revoke(Instant revokedAt, UUID revokedByUserId, String revocationReason) {
-        if (status == ConsentStatus.REVOKED) {
-            throw new IllegalStateException("Consent term is already revoked");
+        if (status != ConsentStatus.ACTIVE) {
+            throw new IllegalStateException("Only active consent can be revoked");
         }
-
         this.status = ConsentStatus.REVOKED;
         this.revokedAt = revokedAt;
         this.revokedByUserId = revokedByUserId;
@@ -111,6 +110,14 @@ public class ConsentTerm {
 
     public boolean isExpired(LocalDate referenceDate) {
         return validUntil != null && validUntil.isBefore(referenceDate);
+    }
+
+    public boolean expireIfNecessary(LocalDate referenceDate) {
+        if (status == ConsentStatus.ACTIVE && isExpired(referenceDate)) {
+            status = ConsentStatus.EXPIRED;
+            return true;
+        }
+        return false;
     }
 
     public UUID getId() {

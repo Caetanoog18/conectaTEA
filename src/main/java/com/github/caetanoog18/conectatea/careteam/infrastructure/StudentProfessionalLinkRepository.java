@@ -10,9 +10,14 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.LocalDate;
 
 public interface StudentProfessionalLinkRepository extends JpaRepository<StudentProfessionalLink, UUID> {
     boolean existsByStudent_IdAndProfessional_IdAndActiveTrue(UUID studentId, UUID professionalId);
+    boolean existsByStudent_IdAndProfessional_IdAndActiveTrueAndStartedOnLessThanEqual(
+            UUID studentId,
+            UUID professionalId,
+            LocalDate referenceDate);
 
     List<StudentProfessionalLink>
     findAllByStudent_IdOrderByProfessional_FullNameAsc(UUID studentId);

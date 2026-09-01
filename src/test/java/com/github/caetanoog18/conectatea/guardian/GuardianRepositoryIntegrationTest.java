@@ -47,7 +47,6 @@ class GuardianRepositoryIntegrationTest {
                         "Turma A"
                 )
         );
-
         Guardian guardian = guardianRepository.saveAndFlush(
                 new Guardian(
                         "Maria da Silva",

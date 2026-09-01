@@ -9,4 +9,7 @@ import java.util.UUID;
 public interface GuardianRepository extends JpaRepository<Guardian, UUID> {
     Optional<Guardian> findByCpf(String cpf);
     boolean existsByCpf(String cpf);
+    boolean existsByCpfAndIdNot(String cpf, UUID id);
+    boolean existsByUserId(UUID userId);
+    boolean existsByUserIdAndIdNot(UUID userId, UUID id);
 }

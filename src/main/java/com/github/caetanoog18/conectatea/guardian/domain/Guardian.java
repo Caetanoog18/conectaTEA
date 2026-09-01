@@ -49,7 +49,7 @@ public class Guardian {
     protected Guardian() {
     }
 
-    public Guardian(
+    public void update(
             String fullName,
             String cpf,
             String email,
@@ -61,6 +61,16 @@ public class Guardian {
         this.email = normalizeEmail(email);
         this.phone = normalizeDigits(phone);
         this.userId = userId;
+    }
+
+    public Guardian(
+            String fullName,
+            String cpf,
+            String email,
+            String phone,
+            UUID userId
+    ) {
+        update(fullName, cpf, email, phone, userId);
         this.active = true;
     }
 

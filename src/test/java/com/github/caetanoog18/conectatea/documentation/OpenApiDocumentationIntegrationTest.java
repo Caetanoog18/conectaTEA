@@ -57,4 +57,72 @@ class OpenApiDocumentationIntegrationTest {
         mockMvc.perform(get("/api/users")).andExpect(status().isUnauthorized());
         mockMvc.perform(get("/api/auth/me")).andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void shouldDocumentPasswordAsWriteOnly() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.schemas.LoginRequest.properties.password.writeOnly")
+                        .value(true))
+                .andExpect(jsonPath("$.components.schemas.LoginRequest.properties.password.format")
+                        .value("password"));
+    }
+
+    @Test
+    void shouldDocumentLoginSuccessAndAuthenticationFailure() throws Exception {
+        String path = "$.paths['/api/auth/login'].post";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(path + ".operationId").value("login"))
+                .andExpect(jsonPath(path + ".security").isEmpty())
+                .andExpect(jsonPath(path + ".responses['200'].content['application/json']").exists())
+                .andExpect(jsonPath(path + ".responses['401'].content['application/problem+json']").exists());
+    }
+
+    @Test
+    void shouldDocumentJsonReportAndLimits() throws Exception {
+        String path = "$.paths['/api/me/students/{studentId}/reports'].post";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(path + ".operationId").value("generateStudentReport"))
+                .andExpect(jsonPath(path + ".responses['200'].content['application/json']").exists())
+                .andExpect(jsonPath(path + ".responses['400']").exists())
+                .andExpect(jsonPath(path + ".responses['401']").exists())
+                .andExpect(jsonPath(path + ".responses['403']").exists())
+                .andExpect(jsonPath(path + ".responses['422']").exists())
+                .andExpect(jsonPath(path + ".responses['503']").exists());
+    }
+
+    @Test
+    void shouldDocumentPdfAsBinaryWithDownloadHeaders() throws Exception {
+        String path = "$.paths['/api/me/students/{studentId}/reports/pdf'].post";
+        String success = path + ".responses['200']";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(path + ".operationId").value("exportStudentReportPdf"))
+                .andExpect(jsonPath(success + ".content['application/pdf'].schema.type")
+                        .value("string"))
+                .andExpect(jsonPath(success + ".content['application/pdf'].schema.format")
+                        .value("binary"))
+                .andExpect(jsonPath(success + ".headers['Content-Disposition']").exists())
+                .andExpect(jsonPath(success + ".headers['X-Report-ID']").exists())
+                .andExpect(jsonPath(success + ".headers['X-Request-ID']").exists())
+                .andExpect(jsonPath(path + ".responses['403']").exists())
+                .andExpect(jsonPath(path + ".responses['422']").exists())
+                .andExpect(jsonPath(path + ".responses['500']").exists())
+                .andExpect(jsonPath(path + ".responses['503']").exists());
+    }
+
+    @Test
+    void shouldDocumentReportPeriodAsDateTime() throws Exception {
+        String schema = "$.components.schemas.GenerateStudentReportRequest.properties";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(schema + ".from.format").value("date-time"))
+                .andExpect(jsonPath(schema + ".to.format").value("date-time"));
+    }
 }

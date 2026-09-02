@@ -44,4 +44,33 @@ public interface ConsentTermRepository extends JpaRepository<ConsentTerm, UUID> 
             @Param("requiredPurpose") ConsentPurpose requiredPurpose,
             @Param("sharingPurpose") ConsentPurpose sharingPurpose
     );
+
+    @Query("""
+        select count(c)
+        from ConsentTerm c
+        join c.studentGuardian sg
+        join sg.guardian g
+        where sg.student.id = :studentId
+          and sg.legalGuardian = true
+          and g.active = true
+          and c.status = :status
+          and c.grantedAt <= :referenceInstant
+          and (
+              c.validUntil is null
+              or c.validUntil >= :referenceDate
+          )
+          and :requiredPurpose member of c.purposes
+          and :sharingPurpose member of c.purposes
+          and :reportPurpose member of c.purposes
+        """)
+
+    long countValidConsentsForReport(
+            @Param("studentId") UUID studentId,
+            @Param("status") ConsentStatus status,
+            @Param("referenceInstant") Instant referenceInstant,
+            @Param("referenceDate") LocalDate referenceDate,
+            @Param("requiredPurpose") ConsentPurpose requiredPurpose,
+            @Param("sharingPurpose") ConsentPurpose sharingPurpose,
+            @Param("reportPurpose") ConsentPurpose reportPurpose
+    );
 }

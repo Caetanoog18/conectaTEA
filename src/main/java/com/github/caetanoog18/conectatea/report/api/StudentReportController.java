@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import java.util.UUID;
 
@@ -36,5 +39,30 @@ public class StudentReportController {
         var report = studentReportService.generate(studentId, request, jwt.getSubject());
 
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(report);
+    }
+
+    @PostMapping("/pdf")
+    public ResponseEntity<byte[]> generatePdf(
+            @PathVariable UUID studentId,
+            @Valid @RequestBody GenerateStudentReportRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        var generated = studentReportService.generatePdf(studentId, request, jwt.getSubject());
+
+        String filename = "conectatea-report-" + generated.reportId() + ".pdf";
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .cacheControl(CacheControl.noStore())
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(filename)
+                                .build()
+                                .toString()
+                )
+                .header("X-Report-ID", generated.reportId().toString())
+                .contentLength(generated.content().length)
+                .body(generated.content());
     }
 }

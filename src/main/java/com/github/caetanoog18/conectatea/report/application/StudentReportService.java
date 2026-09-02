@@ -6,6 +6,7 @@ import com.github.caetanoog18.conectatea.observation.api.dto.ObservationResponse
 import com.github.caetanoog18.conectatea.observation.infrastructure.ObservationRepository;
 import com.github.caetanoog18.conectatea.report.api.dto.GenerateStudentReportRequest;
 import com.github.caetanoog18.conectatea.report.api.dto.StudentReportResponse;
+import com.github.caetanoog18.conectatea.report.infrastructure.StudentReportPdfRenderer;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,68 +24,92 @@ public class StudentReportService {
     private final ReportAccessService reportAccessService;
     private final ObservationRepository observationRepository;
     private final AuditedOperation auditedOperation;
+    private final StudentReportPdfRenderer pdfRenderer;
 
     public StudentReportService(
             ReportAccessService reportAccessService,
             ObservationRepository observationRepository,
-            AuditedOperation auditedOperation
+            AuditedOperation auditedOperation,
+            StudentReportPdfRenderer pdfRenderer
     ) {
         this.reportAccessService = reportAccessService;
         this.observationRepository = observationRepository;
         this.auditedOperation = auditedOperation;
+        this.pdfRenderer = pdfRenderer;
     }
 
     public StudentReportResponse generate(
             UUID studentId,
             GenerateStudentReportRequest request,
-            String authenticatedEmail
-    ) {
+            String authenticatedEmail) {
         return auditedOperation.execute(
                 AuditAction.REPORT_GENERATE,
                 studentId,
                 null,
                 authenticatedEmail,
-                () -> {
-                    var access = reportAccessService.requireGenerationAccess(studentId, authenticatedEmail);
-
-                    validatePeriod(request);
-
-                    var observations = observationRepository.findForReport(
-                            studentId,
-                            access.purpose(),
-                            request.from(),
-                            request.to(),
-                            PageRequest.of(0, MAX_OBSERVATIONS + 1)
-                    );
-
-                    if (observations.size() > MAX_OBSERVATIONS) {
-                        throw new ResponseStatusException(
-                                HttpStatus.valueOf(422),
-                                "Report exceeds 500 observations; select a shorter period"
-                        );
-                    }
-
-                    var items = observations.stream()
-                            .map(ObservationResponse::from)
-                            .toList();
-
-                    return new StudentReportResponse(
-                            UUID.randomUUID(),
-                            Instant.now(),
-                            StudentReportResponse.StudentSummary.from(access.student()),
-                            StudentReportResponse.RequesterSummary.from(access.requester()),
-                            access.purpose(),
-                            request.from(),
-                            request.to(),
-                            items.size(),
-                            items
-                    );
-                },
+                () -> buildReport(studentId, request, authenticatedEmail),
                 StudentReportResponse::reportId
         );
     }
 
-    private static void validatePeriod(GenerateStudentReportRequest request) {
+    public GeneratedReportPdf generatePdf(UUID studentId, GenerateStudentReportRequest request, String authenticatedEmail) {
+        return auditedOperation.execute(
+                AuditAction.REPORT_PDF_EXPORT,
+                studentId,
+                null,
+                authenticatedEmail,
+                () -> {
+                    var report = buildReport(studentId, request, authenticatedEmail);
+                    byte[] content = pdfRenderer.render(report);
+
+                    return new GeneratedReportPdf(report.reportId(), content);
+                },
+                GeneratedReportPdf::reportId
+        );
+    }
+
+    private StudentReportResponse buildReport(
+            UUID studentId,
+            GenerateStudentReportRequest request,
+            String authenticatedEmail
+    ) {
+        var access = reportAccessService.requireGenerationAccess(studentId, authenticatedEmail);
+
+        validatePeriod(request);
+
+        var observations = observationRepository.findForReport(
+                studentId,
+                access.purpose(),
+                request.from(),
+                request.to(),
+                PageRequest.of(0, MAX_OBSERVATIONS + 1)
+        );
+
+        if (observations.size() > MAX_OBSERVATIONS) {
+            throw new ResponseStatusException(HttpStatus.valueOf(422),
+                    "Report exceeds 500 observations; select a shorter period");
+        }
+
+        var items = observations.stream()
+                .map(ObservationResponse::from)
+                .toList();
+
+        return new StudentReportResponse(
+                UUID.randomUUID(),
+                Instant.now(),
+                StudentReportResponse.StudentSummary.from(access.student()),
+                StudentReportResponse.RequesterSummary.from(access.requester()),
+                access.purpose(),
+                request.from(),
+                request.to(),
+                items.size(),
+                items
+        );
+    }
+
+    private static void validatePeriod(
+            GenerateStudentReportRequest request
+    ) {
         if (request == null || request.from() == null || request.to() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Start and end dates are required");
         }

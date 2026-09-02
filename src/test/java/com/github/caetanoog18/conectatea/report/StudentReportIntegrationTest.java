@@ -21,6 +21,13 @@ import com.github.caetanoog18.conectatea.observation.domain.Observation;
 import com.github.caetanoog18.conectatea.observation.infrastructure.ObservationRepository;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.report.api.dto.StudentReportResponse;
+import com.github.caetanoog18.conectatea.report.infrastructure.StudentReportPdfRenderer;
+import org.openpdf.text.pdf.PdfReader;
+import org.openpdf.text.pdf.parser.PdfTextExtractor;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.web.server.ResponseStatusException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +51,10 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(properties = {
@@ -71,6 +82,8 @@ class StudentReportIntegrationTest {
     private User teacher;
     private Student student;
     private ConsentTerm consent;
+    @MockitoSpyBean
+    private StudentReportPdfRenderer pdfRenderer;
 
     @BeforeEach
     void setUp() {
@@ -257,6 +270,143 @@ class StudentReportIntegrationTest {
                 .andReturn();
 
         assertAudit(result, AuditOutcome.FAILURE);
+    }
+
+    @Test
+    void shouldExportPdfAndAuditOnlyPdfAction() throws Exception {
+        saveObservation(
+                student,
+                teacher,
+                ConsentPurpose.EDUCATIONAL_SUPPORT,
+                "Participação na educação",
+                FROM
+        );
+
+        var physician = createUser(UserRole.PHYSICIAN);
+
+        saveObservation(
+                student,
+                physician,
+                ConsentPurpose.MULTIPROFESSIONAL_MONITORING,
+                "CONTEUDO_NAO_AUTORIZADO",
+                FROM
+        );
+
+        var result = mockMvc.perform(
+                        pdfRequest(FROM, TO).with(jwt().jwt(token -> token.subject(teacher.getEmail()))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andReturn();
+
+        assertThat(result.getResponse().getHeader("Content-Disposition"))
+                .startsWith("attachment;")
+                .contains(".pdf");
+
+        assertThat(result.getResponse().getHeader("Cache-Control")).contains("no-store");
+
+        String reportId = result.getResponse().getHeader("X-Report-ID");
+        assertThat(reportId).isNotBlank();
+
+        try (PdfReader reader = new PdfReader(
+                result.getResponse().getContentAsByteArray()
+        )) {
+            PdfTextExtractor extractor = new PdfTextExtractor(reader);
+            StringBuilder text = new StringBuilder();
+
+            for (int page = 1; page <= reader.getNumberOfPages(); page++) {
+                text.append(extractor.getTextFromPage(page));
+            }
+
+            assertThat(text.toString())
+                    .contains("Participação na educação")
+                    .contains(reportId)
+                    .doesNotContain("CONTEUDO_NAO_AUTORIZADO");
+        }
+
+        assertPdfAudit(result, AuditOutcome.SUCCESS);
+
+        UUID requestId = UUID.fromString(result.getResponse().getHeader("X-Request-ID"));
+
+        var event = auditRepository.findAllByRequestIdOrderByOccurredAtAscIdAsc(requestId).getFirst();
+
+        assertThat(event.getResourceId()).isEqualTo(UUID.fromString(reportId));
+    }
+
+    @Test
+    void pdfRenderingFailureShouldNotCreateSuccessAudit() throws Exception {
+        doThrow(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "PDF generation failed"))
+                .when(pdfRenderer)
+                .render(any(StudentReportResponse.class));
+
+        var result = mockMvc.perform(
+                        pdfRequest(FROM, TO).with(jwt().jwt(token -> token.subject(teacher.getEmail()))))
+                .andExpect(status().isInternalServerError())
+                .andReturn();
+
+        assertThat(result.getResponse().getHeader("Content-Disposition")).isNull();
+        assertThat(result.getResponse().getHeader("X-Report-ID")).isNull();
+
+        assertPdfAudit(result, AuditOutcome.FAILURE);
+    }
+
+    @Test
+    void revokedConsentShouldBlockPdfExport() throws Exception {
+        consent.revoke(Instant.now(), administrator.getId(), "PDF permission withdrawn");
+        consentRepository.saveAndFlush(consent);
+
+        var result = mockMvc.perform(
+                        pdfRequest(FROM, TO).with(jwt().jwt(token -> token.subject(teacher.getEmail()))))
+                .andExpect(status().isForbidden())
+                .andReturn();
+
+        assertPdfAudit(result, AuditOutcome.DENIED);
+    }
+
+    @Test
+    void administratorShouldNotBypassPdfAuthorization() throws Exception {
+        mockMvc.perform(
+                        pdfRequest(FROM, TO).with(jwt().jwt(token -> token.subject(administrator.getEmail()))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void anonymousPdfRequestShouldBeRejected() throws Exception {
+        mockMvc.perform(pdfRequest(FROM, TO)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void invalidPdfPeriodShouldBeRejected() throws Exception {
+        var result = mockMvc.perform(
+                pdfRequest(TO, FROM).with(jwt().jwt(token -> token.subject(teacher.getEmail()))))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        assertPdfAudit(result, AuditOutcome.FAILURE);
+    }
+
+    private MockHttpServletRequestBuilder pdfRequest(Instant from, Instant to) {
+        return post("/api/me/students/{studentId}/reports/pdf", student.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "from": "%s",
+                      "to": "%s"
+                    }
+                    """.formatted(from, to));
+    }
+
+    private void assertPdfAudit(MvcResult result, AuditOutcome expectedOutcome) {
+        String header = result.getResponse().getHeader("X-Request-ID");
+        assertThat(header).isNotBlank();
+
+        var events = auditRepository.findAllByRequestIdOrderByOccurredAtAscIdAsc(UUID.fromString(header));
+        assertThat(events).hasSize(1);
+        var event = events.getFirst();
+
+        assertThat(event.getAction()).isEqualTo(AuditAction.REPORT_PDF_EXPORT);
+        assertThat(event.getOutcome()).isEqualTo(expectedOutcome);
+        assertThat(event.getStudentId()).isEqualTo(student.getId());
+        assertThat(event.getActorUserId()).isEqualTo(teacher.getId());
     }
 
     private MockHttpServletRequestBuilder reportRequest(Instant from, Instant to) {

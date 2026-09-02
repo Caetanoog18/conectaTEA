@@ -36,7 +36,7 @@ public interface ConsentTermRepository extends JpaRepository<ConsentTerm, UUID> 
               and :sharingPurpose member of c.purposes
             """)
 
-    long countAuthorizingProfileRead(
+    long countValidConsentsForPurposes(
             @Param("studentId") UUID studentId,
             @Param("status") ConsentStatus status,
             @Param("referenceInstant") Instant referenceInstant,

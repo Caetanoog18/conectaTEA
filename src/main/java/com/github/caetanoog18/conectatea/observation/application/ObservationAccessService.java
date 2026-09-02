@@ -1,4 +1,4 @@
-package com.github.caetanoog18.conectatea.careteam.application;
+package com.github.caetanoog18.conectatea.observation.application;
 
 import com.github.caetanoog18.conectatea.careteam.infrastructure.StudentProfessionalLinkRepository;
 import com.github.caetanoog18.conectatea.consent.domain.ConsentPurpose;
@@ -20,13 +20,13 @@ import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
-public class StudentAccessService {
+public class ObservationAccessService {
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
     private final StudentProfessionalLinkRepository linkRepository;
     private final ConsentTermRepository consentRepository;
 
-    public StudentAccessService(
+    public ObservationAccessService(
             UserRepository userRepository,
             StudentRepository studentRepository,
             StudentProfessionalLinkRepository linkRepository,
@@ -38,7 +38,15 @@ public class StudentAccessService {
         this.consentRepository = consentRepository;
     }
 
-    public Student requireProfileReadAccess(UUID studentId, String authenticatedEmail) {
+    public AccessGrant requireCreateAccess(UUID studentId, String authenticatedEmail) {
+        return requireAccess(studentId, authenticatedEmail);
+    }
+
+    public AccessGrant requireReadAccess(UUID studentId, String authenticatedEmail) {
+        return requireAccess(studentId, authenticatedEmail);
+    }
+
+    private AccessGrant requireAccess(UUID studentId, String authenticatedEmail) {
         if (studentId == null || authenticatedEmail == null || authenticatedEmail.isBlank()) {
             throw denied();
         }
@@ -46,16 +54,14 @@ public class StudentAccessService {
         User professional = userRepository
                 .findByEmailIgnoreCase(authenticatedEmail)
                 .filter(User::isActive)
-                .orElseThrow(StudentAccessService::denied);
+                .orElseThrow(ObservationAccessService::denied);
 
-        ConsentPurpose requiredPurpose = requiredPurpose(
-                professional.getRole()
-        );
+        ConsentPurpose purpose = purposeFor(professional.getRole());
 
         Student student = studentRepository
                 .findById(studentId)
                 .filter(Student::isActive)
-                .orElseThrow(StudentAccessService::denied);
+                .orElseThrow(ObservationAccessService::denied);
 
         Instant now = Instant.now();
         LocalDate today = LocalDate.ofInstant(now, ZoneOffset.UTC);
@@ -71,24 +77,24 @@ public class StudentAccessService {
             throw denied();
         }
 
-        long authorizingConsents = consentRepository
+        long validConsents = consentRepository
                 .countValidConsentsForPurposes(
                         studentId,
                         ConsentStatus.ACTIVE,
                         now,
                         today,
-                        requiredPurpose,
+                        purpose,
                         ConsentPurpose.INFORMATION_SHARING_WITH_CARE_TEAM
                 );
 
-        if (authorizingConsents == 0) {
+        if (validConsents == 0) {
             throw denied();
         }
 
-        return student;
+        return new AccessGrant(student, professional, purpose);
     }
 
-    private static ConsentPurpose requiredPurpose(UserRole role) {
+    private static ConsentPurpose purposeFor(UserRole role) {
         return switch (role) {
             case TEACHER, AEE_TEACHER -> ConsentPurpose.EDUCATIONAL_SUPPORT;
             case PEDAGOGICAL_COORDINATOR, PSYCHOLOGIST, PHYSICIAN -> ConsentPurpose.MULTIPROFESSIONAL_MONITORING;
@@ -97,6 +103,9 @@ public class StudentAccessService {
     }
 
     private static AccessDeniedException denied() {
-        return new AccessDeniedException("Access to this student is not authorized");
+        return new AccessDeniedException("Access to observations is not authorized");
+    }
+
+    public record AccessGrant(Student student, User professional, ConsentPurpose purpose) {
     }
 }

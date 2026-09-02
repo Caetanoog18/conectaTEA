@@ -33,28 +33,36 @@ public class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationConverter jwtAuthenticationConverter
-    ) throws Exception {
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            @Value("${springdoc.api-docs.enabled:false}") boolean apiDocsEnabled) throws Exception {
+        String[] documentationPaths = {
+                "/v3/api-docs",
+                "/v3/api-docs/**",
+                "/v3/api-docs.yaml",
+                "/swagger-ui.html",
+                "/swagger-ui/**"
+        };
+
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/actuator/health", "/actuator/info")
-                        .permitAll()
-                        .requestMatchers("/api/auth/login")
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated()
-                )
+                .authorizeHttpRequests(authorize -> {
+                    authorize.requestMatchers("/actuator/health", "/actuator/info")
+                            .permitAll()
+                            .requestMatchers("/api/auth/login")
+                            .permitAll();
+
+                    if (apiDocsEnabled) {
+                        authorize.requestMatchers(documentationPaths).permitAll();
+                    } else {
+                        authorize.requestMatchers(documentationPaths).denyAll();
+                    }
+                    authorize.anyRequest().authenticated();
+                })
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt
-                                .jwtAuthenticationConverter(
-                                        jwtAuthenticationConverter
-                                )
-                        )
-                )
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .build();
@@ -66,12 +74,8 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    AuthenticationManager authenticationManager(
-            UserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder
-    ) {
-        DaoAuthenticationProvider provider =
-                new DaoAuthenticationProvider(userDetailsService);
+    AuthenticationManager authenticationManager(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
 
         provider.setPasswordEncoder(passwordEncoder);
 
@@ -79,24 +83,17 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    SecretKey jwtSecretKey(
-            @Value("${app.security.jwt.secret}") String encodedSecret
-    ) {
+    SecretKey jwtSecretKey(@Value("${app.security.jwt.secret}") String encodedSecret) {
         byte[] secretBytes;
 
         try {
             secretBytes = Base64.getDecoder().decode(encodedSecret);
         } catch (IllegalArgumentException exception) {
-            throw new IllegalStateException(
-                    "JWT_SECRET must be a valid Base64 value",
-                    exception
-            );
+            throw new IllegalStateException("JWT_SECRET must be a valid Base64 value", exception);
         }
 
         if (secretBytes.length < 32) {
-            throw new IllegalStateException(
-                    "JWT_SECRET must contain at least 32 bytes"
-            );
+            throw new IllegalStateException("JWT_SECRET must contain at least 32 bytes");
         }
 
         return new SecretKeySpec(secretBytes, "HmacSHA256");
@@ -104,43 +101,31 @@ public class SecurityConfiguration {
 
     @Bean
     JwtEncoder jwtEncoder(SecretKey secretKey) {
-        return NimbusJwtEncoder
-                .withSecretKey(secretKey)
-                .algorithm(MacAlgorithm.HS256)
-                .build();
+        return NimbusJwtEncoder.withSecretKey(secretKey).algorithm(MacAlgorithm.HS256).build();
     }
 
     @Bean
-    JwtDecoder jwtDecoder(
-            SecretKey secretKey,
-            @Value("${app.security.jwt.issuer}") String issuer
-    ) {
+    JwtDecoder jwtDecoder(SecretKey secretKey, @Value("${app.security.jwt.issuer}") String issuer) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder
                 .withSecretKey(secretKey)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
 
-        decoder.setJwtValidator(
-                JwtValidators.createDefaultWithIssuer(issuer)
-        );
+        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
 
         return decoder;
     }
 
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter authoritiesConverter =
-                new JwtGrantedAuthoritiesConverter();
+        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
 
         authoritiesConverter.setAuthoritiesClaimName("roles");
         authoritiesConverter.setAuthorityPrefix("ROLE_");
 
-        JwtAuthenticationConverter authenticationConverter =
-                new JwtAuthenticationConverter();
+        JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
 
-        authenticationConverter.setJwtGrantedAuthoritiesConverter(
-                authoritiesConverter
-        );
+        authenticationConverter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
 
         return authenticationConverter;
     }

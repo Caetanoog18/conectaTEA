@@ -47,15 +47,8 @@ public class StudentService {
         return StudentResponse.from(save(student));
     }
 
-    public PagedResponse<StudentResponse> findAll(
-            int page,
-            int size
-    ) {
-        PageRequest pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(Sort.Direction.ASC, "fullName")
-        );
+    public PagedResponse<StudentResponse> findAll(int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "fullName"));
 
         Page<StudentResponse> students = studentRepository
                 .findAll(pageable)
@@ -69,10 +62,7 @@ public class StudentService {
     }
 
     @Transactional
-    public StudentResponse update(
-            UUID studentId,
-            StudentRequest request
-    ) {
+    public StudentResponse update(UUID studentId, StudentRequest request) {
         Student student = findStudent(studentId);
 
         if (studentRepository
@@ -97,10 +87,7 @@ public class StudentService {
     }
 
     @Transactional
-    public StudentResponse updateStatus(
-            UUID studentId,
-            UpdateStudentStatusRequest request
-    ) {
+    public StudentResponse updateStatus(UUID studentId, UpdateStudentStatusRequest request) {
         Student student = findStudent(studentId);
 
         if (request.active()) {
@@ -109,16 +96,12 @@ public class StudentService {
             student.deactivate();
         }
 
-        return StudentResponse.from(
-                studentRepository.saveAndFlush(student)
-        );
+        return StudentResponse.from(studentRepository.saveAndFlush(student));
     }
 
     private Student findStudent(UUID studentId) {
         return studentRepository.findById(studentId)
-                .orElseThrow(
-                        () -> new StudentNotFoundException(studentId)
-                );
+                .orElseThrow(() -> new StudentNotFoundException(studentId));
     }
 
     private Student save(Student student) {

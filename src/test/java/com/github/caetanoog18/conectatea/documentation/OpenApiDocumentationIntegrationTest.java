@@ -8,10 +8,12 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(properties = {
@@ -124,5 +126,105 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath(schema + ".from.format").value("date-time"))
                 .andExpect(jsonPath(schema + ".to.format").value("date-time"));
+    }
+
+    @Test
+    void shouldDocumentUserCreationAndStatusConflict() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(
+                        "$.paths['/api/users'].post.operationId").value("createUser"))
+                .andExpect(jsonPath(
+                        "$.paths['/api/users'].post.responses['201']").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/users'].post.responses['201'].headers.Location").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/users'].post.responses['409']").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/users'].post.responses['403']").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/users/{userId}/status'].patch.responses['409']").exists());
+    }
+
+    @Test
+    void shouldDocumentSingleInstitution() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(
+                        "$.paths['/api/institution'].get.operationId").value("getInstitution"))
+                .andExpect(jsonPath(
+                        "$.paths['/api/institution'].get.responses['404']").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/institution'].post.responses['201']").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/institution'].post.responses['409']").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/institution'].put.responses['403']").exists());
+    }
+
+    @Test
+    void shouldDocumentStudentManagement() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(
+                        "$.paths['/api/students'].get.operationId").value("listStudents"))
+                .andExpect(jsonPath(
+                        "$.paths['/api/students'].get.responses['200'].content['application/json'].schema")
+                        .exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/students'].post.responses['201']").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/students/{studentId}'].put.responses['409']").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/students/{studentId}/status'].patch.responses['404']").exists());
+    }
+
+    @Test
+    void shouldDocumentPaginationParameters() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(
+                        "$.paths['/api/users'].get.parameters[?(@.name == 'page')].schema.default")
+                        .value(org.hamcrest.Matchers.hasItem(0)))
+                .andExpect(jsonPath(
+                        "$.paths['/api/users'].get.parameters[?(@.name == 'size')].schema.maximum")
+                        .value(org.hamcrest.Matchers.hasItem(100)))
+                .andExpect(jsonPath(
+                        "$.paths['/api/students'].get.parameters[?(@.name == 'size')].schema.maximum")
+                        .value(org.hamcrest.Matchers.hasItem(100)));
+    }
+
+    @Test
+    void shouldDocumentUserPasswordConstraints() throws Exception {
+        String password = "$.components.schemas.CreateUserRequest.properties.password";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(password + ".writeOnly").value(true))
+                .andExpect(jsonPath(password + ".minLength").value(12))
+                .andExpect(jsonPath(password + ".maxLength").value(64));
+    }
+
+    @Test
+    void invalidManagementPaginationShouldReturnBadRequest() throws Exception {
+        for (String path : new String[]{"/api/users", "/api/students"}) {
+            mockMvc.perform(
+                            get(path)
+                                    .param("page", "-1")
+                                    .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"))))
+                    .andExpect(status().isBadRequest());
+
+            mockMvc.perform(
+                            get(path)
+                                    .param("size", "0")
+                                    .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"))))
+                    .andExpect(status().isBadRequest());
+
+            mockMvc.perform(
+                            get(path)
+                                    .param("size", "101")
+                                    .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"))))
+                    .andExpect(status().isBadRequest());
+        }
     }
 }

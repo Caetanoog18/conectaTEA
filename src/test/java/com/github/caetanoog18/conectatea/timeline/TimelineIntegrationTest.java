@@ -141,8 +141,7 @@ class TimelineIntegrationTest {
         read("page", "1", "size", "2")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].id")
-                        .value(older.getId().toString()));
+                .andExpect(jsonPath("$.content[0].id").value(older.getId().toString()));
     }
 
     @Test
@@ -173,15 +172,9 @@ class TimelineIntegrationTest {
     void shouldFilterStudentAndPurposeIncludingTotalCount() throws Exception {
         grantConsent();
 
-        Observation allowed = educational(
-                "Registro autorizado",
-                "2026-01-10T14:00:00Z"
-        );
+        Observation allowed = educational("Registro autorizado", "2026-01-10T14:00:00Z");
 
-        User psychologist = persistUser(
-                "timeline-psychologist@example.com",
-                UserRole.PSYCHOLOGIST
-        );
+        User psychologist = persistUser("timeline-psychologist@example.com", UserRole.PSYCHOLOGIST);
 
         persistObservation(
                 student,
@@ -264,8 +257,7 @@ class TimelineIntegrationTest {
                         get(baseUrl())
                                 .with(jwt()
                                         .jwt(token -> token.subject(administrator.getEmail()))
-                                        .authorities(
-                                                new SimpleGrantedAuthority("ROLE_TEACHER"))))
+                                        .authorities(new SimpleGrantedAuthority("ROLE_TEACHER"))))
                 .andExpect(status().isForbidden());
     }
 
@@ -289,16 +281,14 @@ class TimelineIntegrationTest {
 
     @Test
     void anonymousRequestShouldBeRejected() throws Exception {
-        mockMvc.perform(get(baseUrl()))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get(baseUrl())).andExpect(status().isUnauthorized());
     }
 
     private ResultActions read(String... parameters) throws Exception {
         entityManager.flush();
         entityManager.clear();
 
-        var request = get(baseUrl())
-                .with(jwt().jwt(token -> token.subject(teacher.getEmail())));
+        var request = get(baseUrl()).with(jwt().jwt(token -> token.subject(teacher.getEmail())));
 
         for (int index = 0; index < parameters.length; index += 2) {
             request.param(parameters[index], parameters[index + 1]);

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 public record CreateUserRequest(
@@ -17,6 +18,11 @@ public record CreateUserRequest(
         @Size(max = 254, message = "Email must contain at most 254 characters")
         String email,
 
+        @Schema(
+                description = "Senha inicial, entre 12 e 64 caracteres",
+                format = "password",
+                accessMode = Schema.AccessMode.WRITE_ONLY
+        )
         @NotBlank(message = "Password is required")
         @Size(
                 min = 12,

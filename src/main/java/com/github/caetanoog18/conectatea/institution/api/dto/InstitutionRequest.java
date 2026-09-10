@@ -4,12 +4,20 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public record InstitutionRequest(
         @NotBlank(message = "Institution name is required")
         @Size(max = 160, message = "Institution name must contain at most 160 characters")
         String name,
 
+        @Schema(
+                description = """
+                CNPJ opcional: envie null quando não informado.
+                Aceita 14 dígitos ou o formato numérico com pontuação.
+                A validação atual verifica o formato, não os dígitos.
+                """
+        )
         @Pattern(
                 regexp = "^\\d{14}$|^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$",
                 message = "Tax ID must be a valid CNPJ format"

@@ -363,4 +363,95 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath("$.components.schemas.CreateProfessionalLinkRequest.properties.startedOn.format")
                         .value("date"));
     }
+
+
+    @Test
+    void shouldDocumentObservationOperations() throws Exception {
+        String collection = "$.paths['/api/me/students/{studentId}/observations']";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(collection + ".post.operationId")
+                        .value("createObservation"))
+                .andExpect(jsonPath(collection + ".post.responses['201'].headers.Location")
+                        .exists())
+                .andExpect(jsonPath(collection + ".post.responses['201'].headers['X-Request-ID']")
+                        .exists())
+                .andExpect(jsonPath(collection + ".post.responses['403']")
+                        .exists())
+                .andExpect(jsonPath(collection + ".post.responses['503']")
+                        .exists())
+                .andExpect(jsonPath(collection + ".get.operationId")
+                        .value("listAuthorizedObservations"))
+                .andExpect(jsonPath(collection + ".get.responses['200'].headers['X-Request-ID']")
+                        .exists());
+    }
+
+    @Test
+    void shouldDocumentRestrictedObservationLookup() throws Exception {
+        String path = "$.paths['/api/me/students/{studentId}/observations/{observationId}'].get";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(path + ".operationId")
+                        .value("getAuthorizedObservation"))
+                .andExpect(jsonPath(path + ".responses['403']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['404']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['503']")
+                        .exists());
+    }
+
+    @Test
+    void shouldDocumentObservationRequestConstraints() throws Exception {
+        String properties = "$.components.schemas.CreateObservationRequest.properties";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(properties + ".title.maxLength")
+                        .value(120))
+                .andExpect(jsonPath(properties + ".content.maxLength")
+                        .value(5000))
+                .andExpect(jsonPath(properties + ".occurredAt.format")
+                        .value("date-time"));
+    }
+
+    @Test
+    void shouldDocumentTimelineFiltersAndPagination() throws Exception {
+        String path = "$.paths['/api/me/students/{studentId}/timeline'].get";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(path + ".operationId")
+                        .value("getAuthorizedStudentTimeline"))
+                .andExpect(jsonPath(path + ".parameters[?(@.name == 'from')].schema.format")
+                        .value(org.hamcrest.Matchers.hasItem("date-time")))
+                .andExpect(jsonPath(path + ".parameters[?(@.name == 'to')].schema.format")
+                        .value(org.hamcrest.Matchers.hasItem("date-time")))
+                .andExpect(jsonPath(path + ".parameters[?(@.name == 'page')].schema.minimum")
+                        .value(org.hamcrest.Matchers.hasItem(0)))
+                .andExpect(jsonPath(path + ".parameters[?(@.name == 'size')].schema.maximum")
+                        .value(org.hamcrest.Matchers.hasItem(100)))
+                .andExpect(jsonPath(path + ".responses['200'].headers['X-Request-ID']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['400']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['403']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['503']")
+                        .exists());
+    }
+
+    @Test
+    void observationPaginationShouldBeDocumented() throws Exception {
+        String path = "$.paths['/api/me/students/{studentId}/observations'].get";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(path + ".parameters[?(@.name == 'page')].schema.minimum")
+                        .value(org.hamcrest.Matchers.hasItem(0)))
+                .andExpect(jsonPath(path + ".parameters[?(@.name == 'size')].schema.maximum")
+                        .value(org.hamcrest.Matchers.hasItem(100)));
+    }
 }

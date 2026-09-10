@@ -292,4 +292,75 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath("$.components.schemas.RevokeConsentRequest.properties.reason.maxLength")
                         .value(500));
     }
+
+
+    @Test
+    void shouldDocumentCareTeamManagement() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(
+                        "$.paths['/api/students/{studentId}/care-team'].post.operationId")
+                        .value("createProfessionalLink"))
+                .andExpect(jsonPath(
+                        "$.paths['/api/students/{studentId}/care-team'].post.responses['201'].headers.Location")
+                        .exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/students/{studentId}/care-team'].post.responses['409']")
+                        .exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/students/{studentId}/care-team'].post.responses['422']")
+                        .exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/students/{studentId}/care-team'].get.operationId")
+                        .value("listStudentCareTeam"))
+                .andExpect(jsonPath(
+                        "$.paths['/api/care-team-links/{linkId}'].get.operationId")
+                        .value("getProfessionalLink"));
+    }
+
+    @Test
+    void shouldDocumentProfessionalLinkClosure() throws Exception {
+        String path = "$.paths['/api/care-team-links/{linkId}/end'].patch";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(path + ".operationId")
+                        .value("endProfessionalLink"))
+                .andExpect(jsonPath(path + ".responses['200']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['404']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['409']")
+                        .exists())
+                .andExpect(jsonPath("$.components.schemas.EndProfessionalLinkRequest.properties.reason.maxLength")
+                        .value(500));
+    }
+
+    @Test
+    void shouldDocumentProfessionalStudentAccessWithoutNotFoundDisclosure() throws Exception {
+        String path = "$.paths['/api/me/students/{studentId}'].get";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(path + ".operationId")
+                        .value("getAccessibleStudentProfile"))
+                .andExpect(jsonPath(path + ".responses['200']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['401']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['403']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['404']")
+                        .doesNotExist());
+    }
+
+    @Test
+    void shouldDocumentProfessionalLinkStartAsDate() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.schemas.CreateProfessionalLinkRequest.properties.professionalId.format")
+                        .value("uuid"))
+                .andExpect(jsonPath("$.components.schemas.CreateProfessionalLinkRequest.properties.startedOn.format")
+                        .value("date"));
+    }
 }

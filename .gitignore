@@ -44,3 +44,6 @@ application-secrets.properties
 # Logs
 *.log
 logs/
+
+
+run_application_backend_test.txt

@@ -454,4 +454,87 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath(path + ".parameters[?(@.name == 'size')].schema.maximum")
                         .value(org.hamcrest.Matchers.hasItem(100)));
     }
+
+
+    @Test
+    void shouldDocumentAuditSearch() throws Exception {
+        String path = "$.paths['/api/audit-events'].get";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(path + ".operationId")
+                        .value("searchAuditEvents"))
+                .andExpect(jsonPath(path + ".responses['200']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['200'].headers['X-Request-ID']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['400']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['401']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['403']")
+                        .exists())
+                .andExpect(jsonPath(path + ".responses['503']")
+                        .exists());
+    }
+
+    @Test
+    void shouldDocumentAuditFilters() throws Exception {
+        String parameters = "$.paths['/api/audit-events'].get.parameters";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(parameters + "[?(@.name == 'studentId')].schema.format")
+                        .value(org.hamcrest.Matchers.hasItem("uuid")))
+                .andExpect(jsonPath(parameters + "[?(@.name == 'actorUserId')].schema.format")
+                        .value(org.hamcrest.Matchers.hasItem("uuid")))
+                .andExpect(jsonPath(parameters + "[?(@.name == 'requestId')].schema.format")
+                        .value(org.hamcrest.Matchers.hasItem("uuid")))
+                .andExpect(jsonPath(parameters + "[?(@.name == 'from')].schema.format")
+                        .value(org.hamcrest.Matchers.hasItem("date-time")))
+                .andExpect(jsonPath(parameters + "[?(@.name == 'to')].schema.format")
+                        .value(org.hamcrest.Matchers.hasItem("date-time")))
+                .andExpect(jsonPath(parameters + "[?(@.name == 'page')].schema.minimum")
+                        .value(org.hamcrest.Matchers.hasItem(0)))
+                .andExpect(jsonPath(parameters + "[?(@.name == 'size')].schema.maximum")
+                        .value(org.hamcrest.Matchers.hasItem(100)));
+    }
+
+    @Test
+    void shouldDocumentAuditEnums() throws Exception {
+        String parameters = "$.paths['/api/audit-events'].get.parameters";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(parameters + "[?(@.name == 'action')].schema.enum")
+                        .isNotEmpty())
+                .andExpect(jsonPath(parameters + "[?(@.name == 'outcome')].schema.enum")
+                        .value(org.hamcrest.Matchers.hasItem(
+                                org.hamcrest.Matchers.hasItems(
+                                        "SUCCESS",
+                                        "DENIED",
+                                        "FAILURE"
+                                )
+                        )));
+    }
+
+    @Test
+    void shouldDocumentAuditEventFields() throws Exception {
+        String properties = "$.components.schemas.AuditEventResponse.properties";
+
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(properties + ".id.format")
+                        .value("uuid"))
+                .andExpect(jsonPath(properties + ".actorUserId.format")
+                        .value("uuid"))
+                .andExpect(jsonPath(properties + ".studentId.format")
+                        .value("uuid"))
+                .andExpect(jsonPath(properties + ".resourceId.format")
+                        .value("uuid"))
+                .andExpect(jsonPath(properties + ".requestId.format")
+                        .value("uuid"))
+                .andExpect(jsonPath(properties + ".occurredAt.format")
+                        .value("date-time"));
+    }
 }

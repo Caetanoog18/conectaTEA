@@ -191,7 +191,10 @@ class OpenApiDocumentationIntegrationTest {
                         .value(org.hamcrest.Matchers.hasItem(100)))
                 .andExpect(jsonPath(
                         "$.paths['/api/students'].get.parameters[?(@.name == 'size')].schema.maximum")
-                        .value(org.hamcrest.Matchers.hasItem(100)));
+                        .value(org.hamcrest.Matchers.hasItem(100)))
+                .andExpect(jsonPath(
+                "$.paths['/api/guardians'].get.parameters[?(@.name == 'size')].schema.maximum")
+                .value(org.hamcrest.Matchers.hasItem(100)));
     }
 
     @Test
@@ -207,24 +210,86 @@ class OpenApiDocumentationIntegrationTest {
 
     @Test
     void invalidManagementPaginationShouldReturnBadRequest() throws Exception {
-        for (String path : new String[]{"/api/users", "/api/students"}) {
-            mockMvc.perform(
-                            get(path)
-                                    .param("page", "-1")
-                                    .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"))))
+        for (String path : new String[]{
+                "/api/users",
+                "/api/students",
+                "/api/guardians"
+        }) {
+            mockMvc.perform(get(path)
+                            .param("page", "-1")
+                            .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"))))
+                    .andExpect(status().isBadRequest());
+
+            mockMvc.perform(get(path)
+                            .param("size", "0")
+                            .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"))))
                     .andExpect(status().isBadRequest());
 
             mockMvc.perform(
-                            get(path)
-                                    .param("size", "0")
-                                    .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"))))
-                    .andExpect(status().isBadRequest());
-
-            mockMvc.perform(
-                            get(path)
-                                    .param("size", "101")
-                                    .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"))))
+                    get(path)
+                            .param("size", "101")
+                            .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"))))
                     .andExpect(status().isBadRequest());
         }
+    }
+
+    @Test
+    void shouldDocumentGuardianManagement() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/guardians'].post.operationId")
+                        .value("createGuardian"))
+                .andExpect(jsonPath("$.paths['/api/guardians'].post.responses['201'].headers.Location")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/guardians'].post.responses['409']")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/guardians'].post.responses['422']")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/guardians/{guardianId}/status'].patch.operationId")
+                        .value("updateGuardianStatus"));
+    }
+
+    @Test
+    void shouldDocumentStudentGuardianLinks() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/students/{studentId}/guardians'].post.operationId")
+                        .value("createStudentGuardianLink"))
+                .andExpect(jsonPath("$.paths['/api/students/{studentId}/guardians'].post.responses['409']")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/students/{studentId}/guardians'].post.responses['422']")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/students/{studentId}/guardians/{guardianId}'].delete.responses['204']")
+                        .exists());
+    }
+
+    @Test
+    void shouldDocumentConsentLifecycle() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/student-guardian-links/{linkId}/consents'].post.operationId")
+                        .value("createConsent"))
+                .andExpect(jsonPath("$.paths['/api/student-guardian-links/{linkId}/consents'].post.responses['201'].headers.Location")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/student-guardian-links/{linkId}/consents'].post.responses['409']")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/student-guardian-links/{linkId}/consents'].post.responses['422']")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/consents/{consentId}/revoke'].patch.operationId")
+                        .value("revokeConsent"))
+                .andExpect(jsonPath("$.paths['/api/consents/{consentId}/revoke'].patch.responses['409']")
+                        .exists());
+    }
+
+    @Test
+    void shouldDocumentConsentDatesAndRevocationLimit() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.schemas.CreateConsentRequest.properties.grantedAt.format")
+                        .value("date-time"))
+                .andExpect(jsonPath("$.components.schemas.CreateConsentRequest.properties.validUntil.format")
+                        .value("date"))
+                .andExpect(jsonPath("$.components.schemas.RevokeConsentRequest.properties.reason.maxLength")
+                        .value(500));
     }
 }

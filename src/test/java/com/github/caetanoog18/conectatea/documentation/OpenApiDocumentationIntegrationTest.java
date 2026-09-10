@@ -32,12 +32,9 @@ class OpenApiDocumentationIntegrationTest {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.info.title").value("ConectaTEA API"))
-                .andExpect(jsonPath(
-                        "$.components.securitySchemes.bearerAuth.type").value("http"))
-                .andExpect(jsonPath(
-                        "$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
-                .andExpect(jsonPath(
-                        "$.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type").value("http"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
+                .andExpect(jsonPath("$.security[0].bearerAuth").isArray())
                 .andExpect(jsonPath("$.paths['/api/users']").exists())
                 .andExpect(jsonPath("$.paths['/api/me/students/{studentId}/reports/pdf']").exists());
     }
@@ -150,50 +147,36 @@ class OpenApiDocumentationIntegrationTest {
     void shouldDocumentSingleInstitution() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath(
-                        "$.paths['/api/institution'].get.operationId").value("getInstitution"))
-                .andExpect(jsonPath(
-                        "$.paths['/api/institution'].get.responses['404']").exists())
-                .andExpect(jsonPath(
-                        "$.paths['/api/institution'].post.responses['201']").exists())
-                .andExpect(jsonPath(
-                        "$.paths['/api/institution'].post.responses['409']").exists())
-                .andExpect(jsonPath(
-                        "$.paths['/api/institution'].put.responses['403']").exists());
+                .andExpect(jsonPath("$.paths['/api/institution'].get.operationId").value("getInstitution"))
+                .andExpect(jsonPath("$.paths['/api/institution'].get.responses['404']").exists())
+                .andExpect(jsonPath("$.paths['/api/institution'].post.responses['201']").exists())
+                .andExpect(jsonPath("$.paths['/api/institution'].post.responses['409']").exists())
+                .andExpect(jsonPath("$.paths['/api/institution'].put.responses['403']").exists());
     }
 
     @Test
     void shouldDocumentStudentManagement() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath(
-                        "$.paths['/api/students'].get.operationId").value("listStudents"))
-                .andExpect(jsonPath(
-                        "$.paths['/api/students'].get.responses['200'].content['application/json'].schema")
+                .andExpect(jsonPath("$.paths['/api/students'].get.operationId").value("listStudents"))
+                .andExpect(jsonPath("$.paths['/api/students'].get.responses['200'].content['application/json'].schema")
                         .exists())
-                .andExpect(jsonPath(
-                        "$.paths['/api/students'].post.responses['201']").exists())
-                .andExpect(jsonPath(
-                        "$.paths['/api/students/{studentId}'].put.responses['409']").exists())
-                .andExpect(jsonPath(
-                        "$.paths['/api/students/{studentId}/status'].patch.responses['404']").exists());
+                .andExpect(jsonPath("$.paths['/api/students'].post.responses['201']").exists())
+                .andExpect(jsonPath("$.paths['/api/students/{studentId}'].put.responses['409']").exists())
+                .andExpect(jsonPath("$.paths['/api/students/{studentId}/status'].patch.responses['404']").exists());
     }
 
     @Test
     void shouldDocumentPaginationParameters() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath(
-                        "$.paths['/api/users'].get.parameters[?(@.name == 'page')].schema.default")
+                .andExpect(jsonPath("$.paths['/api/users'].get.parameters[?(@.name == 'page')].schema.default")
                         .value(org.hamcrest.Matchers.hasItem(0)))
-                .andExpect(jsonPath(
-                        "$.paths['/api/users'].get.parameters[?(@.name == 'size')].schema.maximum")
+                .andExpect(jsonPath("$.paths['/api/users'].get.parameters[?(@.name == 'size')].schema.maximum")
                         .value(org.hamcrest.Matchers.hasItem(100)))
-                .andExpect(jsonPath(
-                        "$.paths['/api/students'].get.parameters[?(@.name == 'size')].schema.maximum")
+                .andExpect(jsonPath("$.paths['/api/students'].get.parameters[?(@.name == 'size')].schema.maximum")
                         .value(org.hamcrest.Matchers.hasItem(100)))
-                .andExpect(jsonPath(
-                "$.paths['/api/guardians'].get.parameters[?(@.name == 'size')].schema.maximum")
+                .andExpect(jsonPath("$.paths['/api/guardians'].get.parameters[?(@.name == 'size')].schema.maximum")
                 .value(org.hamcrest.Matchers.hasItem(100)));
     }
 
@@ -310,11 +293,9 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath(
                         "$.paths['/api/students/{studentId}/care-team'].post.responses['422']")
                         .exists())
-                .andExpect(jsonPath(
-                        "$.paths['/api/students/{studentId}/care-team'].get.operationId")
+                .andExpect(jsonPath("$.paths['/api/students/{studentId}/care-team'].get.operationId")
                         .value("listStudentCareTeam"))
-                .andExpect(jsonPath(
-                        "$.paths['/api/care-team-links/{linkId}'].get.operationId")
+                .andExpect(jsonPath("$.paths['/api/care-team-links/{linkId}'].get.operationId")
                         .value("getProfessionalLink"));
     }
 

@@ -24,17 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
-@Tag(
-        name = "Autenticação",
-        description = "Login e consulta dos dados presentes no token"
-)
+@Tag(name = "Autenticação", description = "Login e consulta dos dados presentes no token")
 public class AuthenticationController {
-
     private final AuthenticationService authenticationService;
-
-    public AuthenticationController(
-            AuthenticationService authenticationService
-    ) {
+    public AuthenticationController(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
 
@@ -87,11 +80,11 @@ public class AuthenticationController {
             operationId = "getCurrentUser",
             summary = "Consultar os dados do token atual",
             description = """
-                    Retorna o subject e os perfis presentes no JWT validado.
-
-                    Esta operação não consulta novamente o cadastro do usuário.
-                    Portanto, não deve ser usada como prova de que o usuário
-                    continua ativo ou mantém as mesmas permissões no banco.
+                    Retorna o subject e o perfil presentes no JWT validado.
+                    
+                    Antes de executar esta operação, o filtro de autenticação
+                    verifica se a conta existe, permanece ativa e possui
+                    o mesmo perfil informado no token.
                     """
     )
     @ApiResponses({
@@ -100,10 +93,7 @@ public class AuthenticationController {
                     description = "Dados presentes no token",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(
-                                    implementation = AuthenticatedUserResponse.class
-                            )
-                    )
+                            schema = @Schema(implementation = AuthenticatedUserResponse.class))
             ),
             @ApiResponse(
                     responseCode = "401",

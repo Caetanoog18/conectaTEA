@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -104,15 +105,19 @@ public class SecurityConfiguration {
         return NimbusJwtEncoder.withSecretKey(secretKey).algorithm(MacAlgorithm.HS256).build();
     }
 
+
     @Bean
-    JwtDecoder jwtDecoder(SecretKey secretKey, @Value("${app.security.jwt.issuer}") String issuer) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder
-                .withSecretKey(secretKey)
-                .macAlgorithm(MacAlgorithm.HS256)
-                .build();
-
-        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
-
+    JwtDecoder jwtDecoder(
+            SecretKey secretKey,
+            @Value("${app.security.jwt.issuer}") String issuer,
+            CurrentUserJwtValidator currentUserJwtValidator
+    ) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey).macAlgorithm(MacAlgorithm.HS256).build();
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefaultWithIssuer(issuer),
+                currentUserJwtValidator
+                )
+        );
         return decoder;
     }
 

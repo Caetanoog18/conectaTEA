@@ -50,14 +50,22 @@ class CurrentUserJwtIntegrationTest {
 
         mockMvc.perform(
                 get("/api/auth/me")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token(user.getEmail(), "TEACHER")))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token(
+                                user.getEmail(),
+                                "TEACHER",
+                                0L
+                        )))
                 .andExpect(status().isOk());
     }
 
     @Test
     void previouslyIssuedTokenShouldBeRejectedAfterDeactivation() throws Exception {
         User user = createUser();
-        String accessToken = token(user.getEmail(), "TEACHER");
+        String accessToken = token(
+                user.getEmail(),
+                "TEACHER",
+                0L
+        );
 
         user.deactivate();
         userRepository.saveAndFlush(user);
@@ -78,7 +86,8 @@ class CurrentUserJwtIntegrationTest {
                                 HttpHeaders.AUTHORIZATION,
                                 "Bearer " + token(
                                         user.getEmail(),
-                                        "ADMINISTRATOR"
+                                        "ADMINISTRATOR",
+                                        0L
                                 )))
                 .andExpect(status().isUnauthorized());
     }
@@ -89,7 +98,51 @@ class CurrentUserJwtIntegrationTest {
                 get("/api/auth/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token(
                                 UUID.randomUUID() + "@example.com",
-                                "TEACHER")))
+                                "TEACHER",
+                                0L
+                        )))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokenWithoutVersionShouldBeRejected() throws Exception {
+        User user = createUser();
+        Instant now = Instant.now();
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer("conectatea-api")
+                .subject(user.getEmail())
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(3600))
+                .claim("roles", List.of("TEACHER"))
+                .build();
+
+        JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).type("JWT").build();
+
+        String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
+
+        mockMvc.perform(
+                get("/api/auth/me")
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + accessToken
+                        ))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void oldTokenShouldRemainRejectedAfterAccountReactivation() throws Exception {
+        User user = createUser();
+        String oldToken = token(user.getEmail(), "TEACHER", user.getTokenVersion());
+
+        user.deactivate();
+        user.activate();
+        userRepository.saveAndFlush(user);
+
+        mockMvc.perform(
+                get("/api/auth/me").header(
+                                HttpHeaders.AUTHORIZATION,
+                        "Bearer " + oldToken))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -100,11 +153,10 @@ class CurrentUserJwtIntegrationTest {
                         UUID.randomUUID() + "@example.com",
                         "unused-password-hash",
                         UserRole.TEACHER
-                )
-        );
+                ));
     }
 
-    private String token(String email, String role) {
+    private String token(String email, String role, long tokenVersion) {
         Instant now = Instant.now();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
@@ -113,6 +165,7 @@ class CurrentUserJwtIntegrationTest {
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(3600))
                 .claim("roles", List.of(role))
+                .claim("token_version", tokenVersion)
                 .build();
 
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).type("JWT").build();

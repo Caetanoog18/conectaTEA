@@ -50,6 +50,16 @@ public class CurrentUserJwtValidator implements OAuth2TokenValidator<Jwt> {
             return rejected();
         }
 
+        Object versionClaim = token.getClaims().get("token_version");
+
+        if (!(versionClaim instanceof Number tokenVersion)) {
+            return rejected();
+        }
+
+        if (tokenVersion.longValue() != user.get().getTokenVersion()) {
+            return rejected();
+        }
+
         return OAuth2TokenValidatorResult.success();
     }
 

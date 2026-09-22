@@ -94,8 +94,12 @@ public class UserController {
             }
     )
     @PostMapping
-    public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
-        UserResponse response = userService.create(request);
+    public ResponseEntity<UserResponse> create(
+            @Valid @RequestBody CreateUserRequest request,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        UserResponse response = userService.create(request, jwt.getSubject());
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

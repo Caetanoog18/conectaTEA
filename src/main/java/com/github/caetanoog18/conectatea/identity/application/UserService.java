@@ -9,6 +9,9 @@ import com.github.caetanoog18.conectatea.identity.application.exception.SelfDeac
 import com.github.caetanoog18.conectatea.identity.application.exception.UserNotFoundException;
 import com.github.caetanoog18.conectatea.identity.domain.User;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
+import com.github.caetanoog18.conectatea.audit.application.AuditedOperation;
+import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,17 +27,31 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditedOperation auditedOperation;
 
     public UserService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            AuditedOperation auditedOperation
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditedOperation = auditedOperation;
     }
 
     @Transactional
-    public UserResponse create(CreateUserRequest request) {
+    public UserResponse create(CreateUserRequest request, String authenticatedEmail) {
+        return auditedOperation.execute(
+                AuditAction.USER_CREATE,
+                null,
+                null,
+                authenticatedEmail,
+                () -> createUser(request),
+                UserResponse::id
+        );
+    }
+
+    private UserResponse createUser(CreateUserRequest request) {
         if (userRepository.existsByEmailIgnoreCase(request.email())) {
             throw new EmailAlreadyInUseException();
         }
@@ -55,15 +72,8 @@ public class UserService {
     }
 
     public PagedResponse<UserResponse> findAll(int page, int size) {
-        PageRequest pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(Sort.Direction.ASC, "fullName")
-        );
-
-        Page<UserResponse> users = userRepository
-                .findAll(pageable)
-                .map(UserResponse::from);
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "fullName"));
+        Page<UserResponse> users = userRepository.findAll(pageable).map(UserResponse::from);
 
         return PagedResponse.from(users);
     }
@@ -73,15 +83,19 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateStatus(
-            UUID userId,
-            UpdateUserStatusRequest request,
-            String authenticatedEmail
-    ) {
+    public UserResponse updateStatus(UUID userId, UpdateUserStatusRequest request, String authenticatedEmail) {
+        return auditedOperation.execute(
+                AuditAction.USER_STATUS_UPDATE,
+                null,
+                userId,
+                authenticatedEmail,
+                () -> updateUserStatus(userId, request, authenticatedEmail), UserResponse::id);
+    }
+
+    private UserResponse updateUserStatus(UUID userId, UpdateUserStatusRequest request, String authenticatedEmail) {
         User user = findUser(userId);
 
-        if (!request.active()
-                && user.getEmail().equalsIgnoreCase(authenticatedEmail)) {
+        if (!request.active() && user.getEmail().equalsIgnoreCase(authenticatedEmail)) {
             throw new SelfDeactivationException();
         }
 
@@ -91,13 +105,10 @@ public class UserService {
             user.deactivate();
         }
 
-        User updatedUser = userRepository.saveAndFlush(user);
-
-        return UserResponse.from(updatedUser);
+        return UserResponse.from(userRepository.saveAndFlush(user));
     }
 
     private User findUser(UUID userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+        return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
     }
 }

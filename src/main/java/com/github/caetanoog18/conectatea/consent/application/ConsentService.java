@@ -13,6 +13,9 @@ import com.github.caetanoog18.conectatea.guardian.domain.StudentGuardian;
 import com.github.caetanoog18.conectatea.guardian.infrastructure.StudentGuardianRepository;
 import com.github.caetanoog18.conectatea.identity.domain.User;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
+import com.github.caetanoog18.conectatea.audit.application.AuditedOperation;
+import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,32 +31,46 @@ public class ConsentService {
     private final ConsentTermRepository consentRepository;
     private final StudentGuardianRepository linkRepository;
     private final UserRepository userRepository;
+    private final AuditedOperation auditedOperation;
 
     public ConsentService(
             ConsentTermRepository consentRepository,
             StudentGuardianRepository linkRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            AuditedOperation auditedOperation
     ) {
         this.consentRepository = consentRepository;
         this.linkRepository = linkRepository;
         this.userRepository = userRepository;
+        this.auditedOperation = auditedOperation;
     }
 
     @Transactional
     public ConsentResponse create(UUID studentGuardianId, CreateConsentRequest request, String authenticatedEmail) {
         StudentGuardian link = findLink(studentGuardianId);
+
+        UUID studentId = link.getStudent().getId();
+
+        return auditedOperation.execute(
+                AuditAction.CONSENT_CREATE,
+                studentId,
+                studentGuardianId,
+                authenticatedEmail,
+                () -> createConsent(link, request, authenticatedEmail), ConsentResponse::id);
+    }
+
+    private ConsentResponse createConsent(StudentGuardian link, CreateConsentRequest request, String authenticatedEmail) {
         validateLink(link);
         validateValidity(request);
 
         User recordedBy = findAuthenticatedUser(authenticatedEmail);
 
+        UUID studentGuardianId = link.getId();
+
         expirePreviousConsent(studentGuardianId);
 
-        if (consentRepository.existsByStudentGuardian_IdAndStatus(
-                studentGuardianId,
-                ConsentStatus.ACTIVE
-        )) {
-            throw new ConsentConflictException("Student guardian link already has an active consent");
+        if (consentRepository.existsByStudentGuardian_IdAndStatus(studentGuardianId, ConsentStatus.ACTIVE)) {
+            throw new ConsentConflictException("Student guardian link already has " + "an active consent");
         }
 
         ConsentTerm consent = new ConsentTerm(
@@ -66,13 +83,9 @@ public class ConsentService {
         );
 
         try {
-            return ConsentResponse.from(
-                    consentRepository.saveAndFlush(consent)
-            );
+            return ConsentResponse.from(consentRepository.saveAndFlush(consent));
         } catch (DataIntegrityViolationException exception) {
-            throw new ConsentConflictException(
-                    "Unable to create consent because of a data conflict"
-            );
+            throw new ConsentConflictException("Unable to create consent because " + "of a data conflict");
         }
     }
 
@@ -88,18 +101,11 @@ public class ConsentService {
         findLink(studentGuardianId);
 
         ConsentTerm consent = consentRepository
-                .findByStudentGuardian_IdAndStatus(
-                        studentGuardianId,
-                        ConsentStatus.ACTIVE
-                )
-                .orElseThrow(() -> new ConsentNotFoundException(
-                        "Active consent not found for student guardian link"
-                ));
+                .findByStudentGuardian_IdAndStatus(studentGuardianId, ConsentStatus.ACTIVE)
+                .orElseThrow(() -> new ConsentNotFoundException("Active consent not found for student guardian link"));
 
         if (consent.isExpired(currentDate())) {
-            throw new ConsentNotFoundException(
-                    "Active consent not found for student guardian link"
-            );
+            throw new ConsentNotFoundException("Active consent not found for student guardian link");
         }
 
         return ConsentResponse.from(consent);
@@ -110,13 +116,9 @@ public class ConsentService {
         findLink(studentGuardianId);
 
         return consentRepository
-                .findAllByStudentGuardian_IdOrderByGrantedAtDesc(
-                        studentGuardianId
-                )
+                .findAllByStudentGuardian_IdOrderByGrantedAtDesc(studentGuardianId)
                 .stream()
-                .peek(consent ->
-                        consent.expireIfNecessary(currentDate())
-                )
+                .peek(consent -> consent.expireIfNecessary(currentDate()))
                 .map(ConsentResponse::from)
                 .toList();
     }
@@ -125,6 +127,17 @@ public class ConsentService {
     public ConsentResponse revoke(UUID consentId, RevokeConsentRequest request, String authenticatedEmail) {
         ConsentTerm consent = findConsent(consentId);
 
+        UUID studentId = consent.getStudentGuardian().getStudent().getId();
+
+        return auditedOperation.execute(
+                AuditAction.CONSENT_REVOKE,
+                studentId,
+                consentId,
+                authenticatedEmail,
+                () -> revokeConsent(consent, request, authenticatedEmail), ConsentResponse::id);
+    }
+
+    private ConsentResponse revokeConsent(ConsentTerm consent, RevokeConsentRequest request, String authenticatedEmail) {
         if (consent.isExpired(currentDate())) {
             throw new ConsentConflictException("Expired consent cannot be revoked");
         }
@@ -137,17 +150,12 @@ public class ConsentService {
 
         consent.revoke(java.time.Instant.now(), revokedBy.getId(), request.reason().trim());
 
-        return ConsentResponse.from(
-                consentRepository.saveAndFlush(consent)
-        );
+        return ConsentResponse.from(consentRepository.saveAndFlush(consent));
     }
 
     private void expirePreviousConsent(UUID studentGuardianId) {
         consentRepository
-                .findByStudentGuardian_IdAndStatus(
-                        studentGuardianId,
-                        ConsentStatus.ACTIVE
-                )
+                .findByStudentGuardian_IdAndStatus(studentGuardianId, ConsentStatus.ACTIVE)
                 .ifPresent(consent -> {
                     if (consent.expireIfNecessary(currentDate())) {
                         consentRepository.saveAndFlush(consent);
@@ -160,8 +168,7 @@ public class ConsentService {
             throw new InvalidConsentException("Consent can only be registered for a legal guardian");
         }
 
-        if (!link.getStudent().isActive()
-                || !link.getGuardian().isActive()) {
+        if (!link.getStudent().isActive() || !link.getGuardian().isActive()) {
             throw new InvalidConsentException("Student and guardian must be active");
         }
     }
@@ -185,16 +192,12 @@ public class ConsentService {
 
     private ConsentTerm findConsent(UUID consentId) {
         return consentRepository.findById(consentId)
-                .orElseThrow(
-                        () -> new ConsentNotFoundException(consentId)
-                );
+                .orElseThrow(() -> new ConsentNotFoundException(consentId));
     }
 
     private User findAuthenticatedUser(String email) {
         return userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Authenticated user was not found"
-                ));
+                .orElseThrow(() -> new IllegalStateException("Authenticated user was not found"));
     }
 
     private static LocalDate currentDate() {

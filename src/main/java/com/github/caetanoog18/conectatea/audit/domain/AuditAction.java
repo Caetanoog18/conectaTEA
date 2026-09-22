@@ -13,6 +13,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
                 AUDIT_EVENTS_LIST: consulta da própria auditoria.
                 REPORT_GENERATE: geração de relatório JSON.
                 REPORT_PDF_EXPORT: geração de relatório PDF.
+                USER_CREATE: criação de conta.
+                USER_STATUS_UPDATE: ativação ou desativação de conta.
+                CONSENT_CREATE: registro de consentimento.
+                CONSENT_REVOKE: revogação de consentimento.
                 """
 )
 public enum AuditAction {
@@ -22,5 +26,9 @@ public enum AuditAction {
     TIMELINE_READ,
     AUDIT_EVENTS_LIST,
     REPORT_GENERATE,
-    REPORT_PDF_EXPORT
+    REPORT_PDF_EXPORT,
+    USER_CREATE,
+    USER_STATUS_UPDATE,
+    CONSENT_CREATE,
+    CONSENT_REVOKE
 }

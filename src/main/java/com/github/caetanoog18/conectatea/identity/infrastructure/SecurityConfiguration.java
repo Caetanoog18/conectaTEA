@@ -29,9 +29,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.time.Clock;
 
 @Configuration
 @EnableMethodSecurity
@@ -87,6 +89,11 @@ public class SecurityConfiguration {
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
+    }
+
+    @Bean
+    Clock systemClock() {
+        return Clock.systemUTC();
     }
 
     @Bean

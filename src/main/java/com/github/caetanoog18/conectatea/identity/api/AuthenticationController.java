@@ -4,6 +4,7 @@ import com.github.caetanoog18.conectatea.identity.api.dto.AuthenticatedUserRespo
 import com.github.caetanoog18.conectatea.identity.api.dto.LoginRequest;
 import com.github.caetanoog18.conectatea.identity.api.dto.TokenResponse;
 import com.github.caetanoog18.conectatea.identity.application.AuthenticationService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,7 +12,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -69,11 +73,26 @@ public class AuthenticationController {
                             "application/problem+json",
                             schema = @Schema(implementation = ProblemDetail.class)
                     )
+            ),
+            @ApiResponse(
+                    responseCode = "429",
+                    description = """
+                            Limite de tentativas de autenticação excedido.
+                            O header Retry-After informa quantos segundos
+                            restam para uma nova tentativa.
+                            """,
+                    content = @Content(mediaType = "application/problem+json",
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )
             )
     })
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authenticationService.login(request));
+    public ResponseEntity<TokenResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            @Parameter(hidden = true)
+            HttpServletRequest httpRequest
+    ) {
+        return ResponseEntity.ok(authenticationService.login(request, httpRequest.getRemoteAddr()));
     }
 
     @Operation(

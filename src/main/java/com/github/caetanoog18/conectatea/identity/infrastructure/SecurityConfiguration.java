@@ -13,20 +13,25 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
@@ -35,7 +40,12 @@ public class SecurityConfiguration {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationConverter jwtAuthenticationConverter,
-            @Value("${springdoc.api-docs.enabled:false}") boolean apiDocsEnabled) throws Exception {
+            CorsConfigurationSource corsConfigurationSource,
+            RestAuthenticationEntryPoint authenticationEntryPoint,
+            RestAccessDeniedHandler accessDeniedHandler,
+            @Value("${springdoc.api-docs.enabled:false}")
+            boolean apiDocsEnabled
+    ) throws Exception {
         String[] documentationPaths = {
                 "/v3/api-docs",
                 "/v3/api-docs/**",
@@ -46,9 +56,12 @@ public class SecurityConfiguration {
 
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(authorize -> {
                     authorize.requestMatchers("/actuator/health", "/actuator/info")
                             .permitAll()
@@ -63,6 +76,8 @@ public class SecurityConfiguration {
                     authorize.anyRequest().authenticated();
                 })
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -72,6 +87,37 @@ public class SecurityConfiguration {
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.security.cors.allowed-origins:" + "http://localhost:4200}")
+            String configuredOrigins
+    ) {
+        List<String> allowedOrigins = Arrays
+                .stream(configuredOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList();
+
+        if (allowedOrigins.isEmpty()) {
+            throw new IllegalStateException("At least one CORS origin must be configured");
+        }
+
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        configuration.setExposedHeaders(List.of("Location", "X-Request-ID"));
+        configuration.setAllowCredentials(false);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration("/api/**", configuration);
+
+        return source;
     }
 
     @Bean
@@ -102,22 +148,24 @@ public class SecurityConfiguration {
 
     @Bean
     JwtEncoder jwtEncoder(SecretKey secretKey) {
-        return NimbusJwtEncoder.withSecretKey(secretKey).algorithm(MacAlgorithm.HS256).build();
+        return NimbusJwtEncoder
+                .withSecretKey(secretKey)
+                .algorithm(MacAlgorithm.HS256)
+                .build();
     }
-
 
     @Bean
     JwtDecoder jwtDecoder(
             SecretKey secretKey,
-            @Value("${app.security.jwt.issuer}") String issuer,
+            @Value("${app.security.jwt.issuer}")
+            String issuer,
             CurrentUserJwtValidator currentUserJwtValidator
     ) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey).macAlgorithm(MacAlgorithm.HS256).build();
+
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
-                JwtValidators.createDefaultWithIssuer(issuer),
-                currentUserJwtValidator
-                )
-        );
+                JwtValidators.createDefaultWithIssuer(issuer), currentUserJwtValidator));
+
         return decoder;
     }
 

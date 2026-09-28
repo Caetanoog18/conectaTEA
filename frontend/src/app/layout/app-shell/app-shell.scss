@@ -1,3 +1,159 @@
-.app-content {
+:host {
+  display: block;
+}
+
+.app-shell {
+  display: grid;
   min-height: 100vh;
+  grid-template:
+    "topbar topbar" 4.5rem
+    "sidebar content" 1fr
+    / 16rem minmax(0, 1fr);
+  background: #f4f7f6;
+}
+
+.topbar {
+  z-index: 30;
+  grid-area: topbar;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  color: #ffffff;
+  background: #155e52;
+  box-shadow: 0 0.125rem 0.5rem rgb(0 0 0 / 12%);
+}
+
+.brand {
+  color: inherit;
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.menu-button {
+  display: none;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.user-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.user-information {
+  display: grid;
+  text-align: right;
+
+  span {
+    color: #d5ede8;
+    font-size: 0.8rem;
+  }
+}
+
+.logout-button {
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid rgb(255 255 255 / 50%);
+  border-radius: 0.5rem;
+  color: #ffffff;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: rgb(255 255 255 / 12%);
+  }
+}
+
+.sidebar {
+  z-index: 20;
+  grid-area: sidebar;
+  padding: 1.25rem 0.75rem;
+  background: #ffffff;
+  border-right: 1px solid #dbe4e1;
+}
+
+.navigation {
+  display: grid;
+  gap: 0.35rem;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    border-radius: 0.5rem;
+    color: #314842;
+    text-decoration: none;
+
+    &:hover {
+      background: #eef6f4;
+    }
+
+    &.active {
+      color: #0d5146;
+      background: #dcefea;
+      font-weight: 600;
+    }
+  }
+}
+
+.content {
+  grid-area: content;
+  min-width: 0;
+  padding: 2rem;
+}
+
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 48rem) {
+  .app-shell {
+    grid-template:
+      "topbar" 4.5rem
+      "content" 1fr
+      / minmax(0, 1fr);
+  }
+
+  .menu-button {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 4.5rem auto 0 0;
+    width: min(18rem, 85vw);
+    transform: translateX(-100%);
+    transition: transform 180ms ease;
+  }
+
+  .menu-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .backdrop {
+    position: fixed;
+    z-index: 10;
+    inset: 4.5rem 0 0;
+    display: block;
+    border: 0;
+    background: rgb(0 0 0 / 35%);
+  }
+
+  .content {
+    padding: 1.25rem;
+  }
+
+  .user-information {
+    display: none;
+  }
 }

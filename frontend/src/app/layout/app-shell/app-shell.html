@@ -1,3 +1,68 @@
-<main class="app-content">
-  <router-outlet />
-</main>
+<div
+  class="app-shell"
+  [class.menu-open]="menuOpen()"
+>
+  <header class="topbar">
+    <button
+      type="button"
+      class="menu-button"
+      aria-label="Abrir ou fechar menu"
+      (click)="toggleMenu()"
+    >
+      ☰
+    </button>
+
+    <a
+      class="brand"
+      routerLink="/dashboard"
+      (click)="closeMenu()"
+    >
+      ConectaTEA
+    </a>
+
+    <div class="user-summary">
+      <div class="user-information">
+        <strong>{{ userEmail }}</strong>
+        <span>{{ roleLabel }}</span>
+      </div>
+
+      <button
+        type="button"
+        class="logout-button"
+        (click)="logout()"
+      >
+        Sair
+      </button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <nav
+      aria-label="Navegação principal"
+      class="navigation"
+    >
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeMenu()"
+      >
+        <span aria-hidden="true">⌂</span>
+        Painel
+      </a>
+    </nav>
+  </aside>
+
+  @if (menuOpen()) {
+    <button
+      type="button"
+      class="backdrop"
+      aria-label="Fechar menu"
+      (click)="closeMenu()"
+    ></button>
+  }
+
+  <main class="content">
+    <router-outlet/>
+  </main>
+</div>

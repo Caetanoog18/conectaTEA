@@ -4,6 +4,7 @@ import com.github.caetanoog18.conectatea.identity.api.dto.AuthenticatedUserRespo
 import com.github.caetanoog18.conectatea.identity.api.dto.LoginRequest;
 import com.github.caetanoog18.conectatea.identity.api.dto.TokenResponse;
 import com.github.caetanoog18.conectatea.identity.application.AuthenticationService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,7 +12,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,17 +28,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
-@Tag(
-        name = "Autenticação",
-        description = "Login e consulta dos dados presentes no token"
-)
+@Tag(name = "Autenticação", description = "Login e consulta dos dados presentes no token")
 public class AuthenticationController {
-
     private final AuthenticationService authenticationService;
-
-    public AuthenticationController(
-            AuthenticationService authenticationService
-    ) {
+    public AuthenticationController(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
 
@@ -76,22 +73,37 @@ public class AuthenticationController {
                             "application/problem+json",
                             schema = @Schema(implementation = ProblemDetail.class)
                     )
+            ),
+            @ApiResponse(
+                    responseCode = "429",
+                    description = """
+                            Limite de tentativas de autenticação excedido.
+                            O header Retry-After informa quantos segundos
+                            restam para uma nova tentativa.
+                            """,
+                    content = @Content(mediaType = "application/problem+json",
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )
             )
     })
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authenticationService.login(request));
+    public ResponseEntity<TokenResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            @Parameter(hidden = true)
+            HttpServletRequest httpRequest
+    ) {
+        return ResponseEntity.ok(authenticationService.login(request, httpRequest.getRemoteAddr()));
     }
 
     @Operation(
             operationId = "getCurrentUser",
             summary = "Consultar os dados do token atual",
             description = """
-                    Retorna o subject e os perfis presentes no JWT validado.
-
-                    Esta operação não consulta novamente o cadastro do usuário.
-                    Portanto, não deve ser usada como prova de que o usuário
-                    continua ativo ou mantém as mesmas permissões no banco.
+                    Retorna o subject e o perfil presentes no JWT validado.
+                    
+                    Antes de executar esta operação, o filtro de autenticação
+                    verifica se a conta existe, permanece ativa e possui
+                    o mesmo perfil informado no token.
                     """
     )
     @ApiResponses({
@@ -100,10 +112,7 @@ public class AuthenticationController {
                     description = "Dados presentes no token",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(
-                                    implementation = AuthenticatedUserResponse.class
-                            )
-                    )
+                            schema = @Schema(implementation = AuthenticatedUserResponse.class))
             ),
             @ApiResponse(
                     responseCode = "401",

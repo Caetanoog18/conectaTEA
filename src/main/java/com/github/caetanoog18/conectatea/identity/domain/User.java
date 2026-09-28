@@ -1,6 +1,5 @@
 package com.github.caetanoog18.conectatea.identity.domain;
 
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -19,7 +18,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "users")
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -29,6 +27,9 @@ public class User {
 
     @Column(nullable = false, length = 254)
     private String email;
+
+    @Column(name = "token_version", nullable = false)
+    private long tokenVersion;
 
     @Column(name = "password_hash", nullable = false, length = 60)
     private String passwordHash;
@@ -51,17 +52,13 @@ public class User {
     protected User() {
     }
 
-    public User(
-            String fullName,
-            String email,
-            String passwordHash,
-            UserRole role
-    ) {
+    public User(String fullName, String email, String passwordHash, UserRole role) {
         this.fullName = fullName;
         this.email = normalizeEmail(email);
         this.passwordHash = passwordHash;
         this.role = role;
         this.active = true;
+        this.tokenVersion = 0L;
     }
 
     public UUID getId() {
@@ -88,6 +85,8 @@ public class User {
         return active;
     }
 
+    public long getTokenVersion() {return tokenVersion;}
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -98,14 +97,25 @@ public class User {
 
     public void changePassword(String passwordHash) {
         this.passwordHash = passwordHash;
+        incrementTokenVersion();
     }
 
     public void deactivate() {
-        this.active = false;
+        if (active) {
+            active = false;
+            incrementTokenVersion();
+        }
     }
 
     public void activate() {
-        this.active = true;
+        if (!active) {
+            active = true;
+            incrementTokenVersion();
+        }
+    }
+
+    private void incrementTokenVersion() {
+        tokenVersion++;
     }
 
     private static String normalizeEmail(String email) {

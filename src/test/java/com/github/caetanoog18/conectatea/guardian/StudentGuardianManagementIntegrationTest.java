@@ -8,6 +8,12 @@ import com.github.caetanoog18.conectatea.guardian.infrastructure.GuardianReposit
 import com.github.caetanoog18.conectatea.guardian.infrastructure.StudentGuardianRepository;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
+import com.github.caetanoog18.conectatea.audit.domain.AuditEvent;
+import com.github.caetanoog18.conectatea.audit.domain.AuditOutcome;
+import com.github.caetanoog18.conectatea.audit.infrastructure.AuditEventRepository;
+import org.springframework.test.web.servlet.MvcResult;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,6 +58,9 @@ class StudentGuardianManagementIntegrationTest {
 
     @Autowired
     private StudentGuardianRepository linkRepository;
+
+    @Autowired
+    private AuditEventRepository auditEventRepository;
 
     @Test
     void administratorShouldCreateLink() throws Exception {
@@ -377,5 +386,19 @@ class StudentGuardianManagementIntegrationTest {
 
     private static RequestPostProcessor withRole(String role) {
         return jwt().authorities(new SimpleGrantedAuthority("ROLE_" + role));
+    }
+
+    private AuditEvent auditEventFrom(MvcResult result) {
+        String requestIdHeader = result.getResponse().getHeader("X-Request-ID");
+
+        assertThat(requestIdHeader).isNotBlank();
+
+        UUID requestId = UUID.fromString(requestIdHeader);
+
+        var events = auditEventRepository.findAllByRequestIdOrderByOccurredAtAscIdAsc(requestId);
+
+        assertThat(events).hasSize(1);
+
+        return events.getFirst();
     }
 }

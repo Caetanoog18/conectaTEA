@@ -2,6 +2,10 @@ package com.github.caetanoog18.conectatea.identity;
 
 import com.github.caetanoog18.conectatea.TestcontainersConfiguration;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
+import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
+import com.github.caetanoog18.conectatea.audit.domain.AuditOutcome;
+import com.github.caetanoog18.conectatea.audit.infrastructure.AuditEventRepository;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,6 +16,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -19,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 
 import java.util.UUID;
 
@@ -42,6 +48,9 @@ class UserManagementIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private AuditEventRepository auditEventRepository;
+
     @Test
     void administratorShouldCreateUser() throws Exception {
         String requestBody = """
@@ -53,36 +62,36 @@ class UserManagementIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(
+        MvcResult result = mockMvc.perform(
                         post("/api/users")
-                                .with(jwt().authorities(
-                                        new SimpleGrantedAuthority(
-                                                "ROLE_ADMINISTRATOR"
-                                        )
-                                ))
+                                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR")))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestBody)
                 )
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email")
-                        .value("maria@conectatea.com"))
+                .andExpect(jsonPath("$.email").value("maria@conectatea.com"))
                 .andExpect(jsonPath("$.role").value("TEACHER"))
                 .andExpect(jsonPath("$.active").value(true))
-                .andExpect(jsonPath("$.passwordHash").doesNotExist());
+                .andExpect(jsonPath("$.passwordHash").doesNotExist())
+                .andExpect(header().exists("X-Request-ID"))
+                .andReturn();
 
-        var savedUser = userRepository
-                .findByEmailIgnoreCase("maria@conectatea.com")
-                .orElseThrow();
+        var savedUser = userRepository.findByEmailIgnoreCase("maria@conectatea.com").orElseThrow();
 
-        assertThat(savedUser.getPasswordHash())
-                .isNotEqualTo("StrongPassword123!");
+        assertThat(savedUser.getPasswordHash()).isNotEqualTo("StrongPassword123!");
+        assertThat(passwordEncoder.matches("StrongPassword123!", savedUser.getPasswordHash())).isTrue();
 
-        assertThat(
-                passwordEncoder.matches(
-                        "StrongPassword123!",
-                        savedUser.getPasswordHash()
-                )
-        ).isTrue();
+        String requestIdHeader = result.getResponse().getHeader("X-Request-ID");
+
+        assertThat(requestIdHeader).isNotBlank();
+
+        UUID requestId = UUID.fromString(requestIdHeader);
+
+        var auditEvent = auditEventRepository.findAllByRequestIdOrderByOccurredAtAscIdAsc(requestId).getFirst();
+
+        assertThat(auditEvent.getAction()).isEqualTo(AuditAction.USER_CREATE);
+        assertThat(auditEvent.getOutcome()).isEqualTo(AuditOutcome.SUCCESS);
+        assertThat(auditEvent.getResourceId()).isEqualTo(savedUser.getId());
     }
 
     @Test
@@ -98,14 +107,9 @@ class UserManagementIntegrationTest {
 
         mockMvc.perform(
                         post("/api/users")
-                                .with(jwt().authorities(
-                                        new SimpleGrantedAuthority(
-                                                "ROLE_TEACHER"
-                                        )
-                                ))
+                                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_TEACHER")))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(requestBody)
-                )
+                                .content(requestBody))
                 .andExpect(status().isForbidden());
     }
 
@@ -120,26 +124,15 @@ class UserManagementIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(
-                        post("/api/users")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(requestBody)
-                )
+        mockMvc.perform(post("/api/users").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void statusUpdateWithoutActiveShouldBeRejected() throws Exception {
         mockMvc.perform(
-                        patch(
-                                "/api/users/{userId}/status",
-                                UUID.randomUUID()
-                        )
-                                .with(jwt().authorities(
-                                        new SimpleGrantedAuthority(
-                                                "ROLE_ADMINISTRATOR"
-                                        )
-                                ))
+                        patch("/api/users/{userId}/status", UUID.randomUUID())
+                                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR")))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{}")
                 )

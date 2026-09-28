@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -95,8 +98,12 @@ public class StudentController {
             }
     )
     @PostMapping
-    public ResponseEntity<StudentResponse> create(@Valid @RequestBody StudentRequest request) {
-        StudentResponse response = studentService.create(request);
+    public ResponseEntity<StudentResponse> create(
+            @Valid @RequestBody StudentRequest request,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        StudentResponse response = studentService.create(request, jwt.getSubject());
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -208,9 +215,11 @@ public class StudentController {
     @PutMapping("/{studentId}")
     public ResponseEntity<StudentResponse> update(
             @PathVariable UUID studentId,
-            @Valid @RequestBody StudentRequest request
+            @Valid @RequestBody StudentRequest request,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        return ResponseEntity.ok(studentService.update(studentId, request));
+        return ResponseEntity.ok(studentService.update(studentId, request, jwt.getSubject()));
     }
 
 
@@ -243,8 +252,10 @@ public class StudentController {
     @PatchMapping("/{studentId}/status")
     public ResponseEntity<StudentResponse> updateStatus(
             @PathVariable UUID studentId,
-            @Valid @RequestBody UpdateStudentStatusRequest request
+            @Valid @RequestBody UpdateStudentStatusRequest request,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        return ResponseEntity.ok(studentService.updateStatus(studentId, request));
+        return ResponseEntity.ok(studentService.updateStatus(studentId, request, jwt.getSubject()));
     }
 }

@@ -1,5 +1,7 @@
 package com.github.caetanoog18.conectatea.guardian.application;
 
+import com.github.caetanoog18.conectatea.audit.application.AuditedOperation;
+import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
 import com.github.caetanoog18.conectatea.guardian.api.dto.CreateStudentGuardianLinkRequest;
 import com.github.caetanoog18.conectatea.guardian.api.dto.StudentGuardianResponse;
 import com.github.caetanoog18.conectatea.guardian.api.dto.UpdateStudentGuardianLinkRequest;
@@ -20,6 +22,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import java.util.List;
 import java.util.UUID;
 
@@ -29,18 +32,31 @@ public class StudentGuardianService {
     private final StudentGuardianRepository linkRepository;
     private final StudentRepository studentRepository;
     private final GuardianRepository guardianRepository;
+    private final AuditedOperation auditedOperation;
 
-    public StudentGuardianService(StudentGuardianRepository linkRepository,
+    public StudentGuardianService(
+            StudentGuardianRepository linkRepository,
             StudentRepository studentRepository,
-            GuardianRepository guardianRepository
+            GuardianRepository guardianRepository,
+            AuditedOperation auditedOperation
     ) {
         this.linkRepository = linkRepository;
         this.studentRepository = studentRepository;
         this.guardianRepository = guardianRepository;
+        this.auditedOperation = auditedOperation;
     }
 
     @Transactional
-    public StudentGuardianResponse create(UUID studentId, CreateStudentGuardianLinkRequest request) {
+    public StudentGuardianResponse create(UUID studentId, CreateStudentGuardianLinkRequest request, String authenticatedEmail) {
+        return auditedOperation.execute(
+                AuditAction.STUDENT_GUARDIAN_LINK_CREATE,
+                studentId,
+                null,
+                authenticatedEmail,
+                () -> createLink(studentId, request), StudentGuardianResponse::id);
+    }
+
+    private StudentGuardianResponse createLink(UUID studentId, CreateStudentGuardianLinkRequest request) {
         Student student = findStudent(studentId);
         Guardian guardian = findGuardian(request.guardianId());
 
@@ -48,48 +64,37 @@ public class StudentGuardianService {
             throw new InactiveStudentGuardianException();
         }
 
-        if (linkRepository.existsByStudent_IdAndGuardian_Id(
-                studentId,
-                request.guardianId()
-        )) {
+        if (linkRepository.existsByStudent_IdAndGuardian_Id(studentId, request.guardianId())) {
             throw new StudentGuardianLinkAlreadyExistsException();
         }
 
-        validatePrimaryContact(
-                studentId,
-                request.guardianId(),
-                request.primaryContact(),
-                false
-        );
-        StudentGuardian link = new StudentGuardian(
-                student,
+        validatePrimaryContact(studentId, request.guardianId(), request.primaryContact(), false);
+
+        StudentGuardian link = new StudentGuardian(student,
                 guardian,
                 request.relationship(),
                 request.legalGuardian(),
                 request.primaryContact()
         );
+
         return StudentGuardianResponse.from(save(link));
     }
 
     public List<StudentGuardianResponse> findByStudent(UUID studentId) {
         findStudent(studentId);
+
         return linkRepository
-                .findAllByStudent_IdOrderByGuardian_FullNameAsc(
-                        studentId
-                )
+                .findAllByStudent_IdOrderByGuardian_FullNameAsc(studentId)
                 .stream()
                 .map(StudentGuardianResponse::from)
                 .toList();
     }
 
-    public List<StudentGuardianResponse> findByGuardian(
-            UUID guardianId
-    ) {
+    public List<StudentGuardianResponse> findByGuardian(UUID guardianId) {
         findGuardian(guardianId);
+
         return linkRepository
-                .findAllByGuardian_IdOrderByStudent_FullNameAsc(
-                        guardianId
-                )
+                .findAllByGuardian_IdOrderByStudent_FullNameAsc(guardianId)
                 .stream()
                 .map(StudentGuardianResponse::from)
                 .toList();
@@ -99,60 +104,63 @@ public class StudentGuardianService {
     public StudentGuardianResponse update(
             UUID studentId,
             UUID guardianId,
+            UpdateStudentGuardianLinkRequest request,
+            String authenticatedEmail
+    ) {
+        return auditedOperation.execute(
+                AuditAction.STUDENT_GUARDIAN_LINK_UPDATE,
+                studentId,
+                null,
+                authenticatedEmail,
+                () -> updateLink(studentId, guardianId, request), StudentGuardianResponse::id);
+    }
+
+    private StudentGuardianResponse updateLink(
+            UUID studentId,
+            UUID guardianId,
             UpdateStudentGuardianLinkRequest request
     ) {
         StudentGuardian link = findLink(studentId, guardianId);
 
-        validatePrimaryContact(
-                studentId,
-                guardianId,
-                request.primaryContact(),
-                true
-        );
+        validatePrimaryContact(studentId, guardianId, request.primaryContact(), true);
 
-        link.update(
-                request.relationship(),
-                request.legalGuardian(),
-                request.primaryContact()
-        );
+        link.update(request.relationship(), request.legalGuardian(), request.primaryContact());
 
         return StudentGuardianResponse.from(save(link));
     }
 
     @Transactional
-    public void delete(UUID studentId, UUID guardianId) {
+    public void delete(UUID studentId, UUID guardianId, String authenticatedEmail) {
+        auditedOperation.execute(
+                AuditAction.STUDENT_GUARDIAN_LINK_DELETE,
+                studentId,
+                null,
+                authenticatedEmail,
+                () -> deleteLink(studentId, guardianId), linkId -> linkId);
+    }
+
+    private UUID deleteLink(UUID studentId, UUID guardianId) {
         StudentGuardian link = findLink(studentId, guardianId);
+        UUID linkId = link.getId();
 
         linkRepository.delete(link);
         linkRepository.flush();
+
+        return linkId;
     }
 
     private Student findStudent(UUID studentId) {
-        return studentRepository.findById(studentId)
-                .orElseThrow(
-                        () -> new StudentNotFoundException(studentId)
-                );
+        return studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
     }
 
     private Guardian findGuardian(UUID guardianId) {
-        return guardianRepository.findById(guardianId)
-                .orElseThrow(
-                        () -> new GuardianNotFoundException(guardianId)
-                );
+        return guardianRepository.findById(guardianId).orElseThrow(() -> new GuardianNotFoundException(guardianId));
     }
 
-    private StudentGuardian findLink(
-            UUID studentId,
-            UUID guardianId
-    ) {
+    private StudentGuardian findLink(UUID studentId, UUID guardianId) {
         return linkRepository
-                .findByStudent_IdAndGuardian_Id(
-                        studentId,
-                        guardianId
-                )
-                .orElseThrow(
-                        StudentGuardianLinkNotFoundException::new
-                );
+                .findByStudent_IdAndGuardian_Id(studentId, guardianId)
+                .orElseThrow(StudentGuardianLinkNotFoundException::new);
     }
 
     private void validatePrimaryContact(
@@ -165,16 +173,9 @@ public class StudentGuardianService {
             return;
         }
 
-        boolean exists = updating
-                ? linkRepository
-                .existsByStudent_IdAndPrimaryContactTrueAndGuardian_IdNot(
-                        studentId,
-                        guardianId
-                )
-                : linkRepository
-                .existsByStudent_IdAndPrimaryContactTrue(
-                        studentId
-                );
+        boolean exists = updating ? linkRepository
+                .existsByStudent_IdAndPrimaryContactTrueAndGuardian_IdNot(studentId, guardianId) : linkRepository
+                .existsByStudent_IdAndPrimaryContactTrue(studentId);
 
         if (exists) {
             throw new PrimaryContactAlreadyExistsException();

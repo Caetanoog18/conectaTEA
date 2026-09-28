@@ -30,7 +30,7 @@ public class TokenService {
         this.expiration = expiration;
     }
 
-    public TokenResponse generateToken(Authentication authentication) {
+    public TokenResponse generateToken(Authentication authentication, long tokenVersion) {
         Instant issuedAt = Instant.now();
         Instant expiresAt = issuedAt.plus(expiration);
 
@@ -47,6 +47,7 @@ public class TokenService {
                 .expiresAt(expiresAt)
                 .subject(authentication.getName())
                 .claim("roles", roles)
+                .claim("token_version", tokenVersion)
                 .build();
 
         JwsHeader header = JwsHeader

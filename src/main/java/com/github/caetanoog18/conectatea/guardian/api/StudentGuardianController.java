@@ -4,6 +4,7 @@ import com.github.caetanoog18.conectatea.guardian.api.dto.CreateStudentGuardianL
 import com.github.caetanoog18.conectatea.guardian.api.dto.StudentGuardianResponse;
 import com.github.caetanoog18.conectatea.guardian.api.dto.UpdateStudentGuardianLinkRequest;
 import com.github.caetanoog18.conectatea.guardian.application.StudentGuardianService;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -107,10 +110,12 @@ public class StudentGuardianController {
     @PostMapping("/students/{studentId}/guardians")
     public ResponseEntity<StudentGuardianResponse> create(
             @PathVariable UUID studentId,
-            @Valid @RequestBody
-            CreateStudentGuardianLinkRequest request
+            @Valid @RequestBody CreateStudentGuardianLinkRequest request,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        StudentGuardianResponse response = service.create(studentId, request);
+        StudentGuardianResponse response = service.create(studentId, request, jwt.getSubject());
+
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{guardianId}")
@@ -208,10 +213,11 @@ public class StudentGuardianController {
     public ResponseEntity<StudentGuardianResponse> update(
             @PathVariable UUID studentId,
             @PathVariable UUID guardianId,
-            @Valid @RequestBody
-            UpdateStudentGuardianLinkRequest request
+            @Valid @RequestBody UpdateStudentGuardianLinkRequest request,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        return ResponseEntity.ok(service.update(studentId, guardianId, request));
+        return ResponseEntity.ok(service.update(studentId, guardianId, request, jwt.getSubject()));
     }
 
     @Operation(
@@ -242,8 +248,14 @@ public class StudentGuardianController {
             )
     })
     @DeleteMapping("/students/{studentId}/guardians/{guardianId}")
-    public ResponseEntity<Void> delete(@PathVariable UUID studentId, @PathVariable UUID guardianId) {
-        service.delete(studentId, guardianId);
+    public ResponseEntity<Void> delete(
+            @PathVariable UUID studentId,
+            @PathVariable UUID guardianId,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        service.delete(studentId, guardianId, jwt.getSubject());
+
         return ResponseEntity.noContent().build();
     }
 }

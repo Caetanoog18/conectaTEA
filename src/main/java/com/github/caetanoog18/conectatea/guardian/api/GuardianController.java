@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -28,6 +31,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 
 import java.net.URI;
 import java.util.UUID;
@@ -106,17 +110,20 @@ public class GuardianController {
             )
     })
     @PostMapping
-    public ResponseEntity<GuardianResponse> create(@Valid @RequestBody GuardianRequest request) {
-        GuardianResponse response = guardianService.create(request);
+    public ResponseEntity<GuardianResponse> create(
+            @Valid @RequestBody GuardianRequest request,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        GuardianResponse response = guardianService.create(request, jwt.getSubject());
+
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(response.id())
                 .toUri();
 
-        return ResponseEntity
-                .created(location)
-                .body(response);
+        return ResponseEntity.created(location).body(response);
     }
 
 
@@ -180,12 +187,8 @@ public class GuardianController {
             )
     })
     @GetMapping("/{guardianId}")
-    public ResponseEntity<GuardianResponse> findById(
-            @PathVariable UUID guardianId
-    ) {
-        return ResponseEntity.ok(
-                guardianService.findById(guardianId)
-        );
+    public ResponseEntity<GuardianResponse> findById(@PathVariable UUID guardianId) {
+        return ResponseEntity.ok(guardianService.findById(guardianId));
     }
 
 
@@ -227,11 +230,11 @@ public class GuardianController {
     @PutMapping("/{guardianId}")
     public ResponseEntity<GuardianResponse> update(
             @PathVariable UUID guardianId,
-            @Valid @RequestBody GuardianRequest request
+            @Valid @RequestBody GuardianRequest request,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        return ResponseEntity.ok(
-                guardianService.update(guardianId, request)
-        );
+        return ResponseEntity.ok(guardianService.update(guardianId, request, jwt.getSubject()));
     }
 
     @Operation(
@@ -262,8 +265,10 @@ public class GuardianController {
     @PatchMapping("/{guardianId}/status")
     public ResponseEntity<GuardianResponse> updateStatus(
             @PathVariable UUID guardianId,
-            @Valid @RequestBody UpdateGuardianStatusRequest request
+            @Valid @RequestBody UpdateGuardianStatusRequest request,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        return ResponseEntity.ok(guardianService.updateStatus(guardianId, request));
+        return ResponseEntity.ok(guardianService.updateStatus(guardianId, request, jwt.getSubject()));
     }
 }

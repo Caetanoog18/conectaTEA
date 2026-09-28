@@ -1,5 +1,7 @@
 package com.github.caetanoog18.conectatea.student.application;
 
+import com.github.caetanoog18.conectatea.audit.application.AuditedOperation;
+import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
 import com.github.caetanoog18.conectatea.shared.api.dto.PagedResponse;
 import com.github.caetanoog18.conectatea.student.api.dto.StudentRequest;
 import com.github.caetanoog18.conectatea.student.api.dto.StudentResponse;
@@ -21,16 +23,30 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class StudentService {
     private final StudentRepository studentRepository;
+    private final AuditedOperation auditedOperation;
 
-    public StudentService(StudentRepository studentRepository) {
+    public StudentService(
+            StudentRepository studentRepository,
+            AuditedOperation auditedOperation
+    ) {
         this.studentRepository = studentRepository;
+        this.auditedOperation = auditedOperation;
     }
 
     @Transactional
-    public StudentResponse create(StudentRequest request) {
-        if (studentRepository.existsByEnrollmentNumberIgnoreCase(
-                request.enrollmentNumber()
-        )) {
+    public StudentResponse create(StudentRequest request, String authenticatedEmail) {
+        return auditedOperation.execute(
+                AuditAction.STUDENT_CREATE,
+                null,
+                null,
+                authenticatedEmail,
+                () -> createStudent(request),
+                StudentResponse::id
+        );
+    }
+
+    private StudentResponse createStudent(StudentRequest request) {
+        if (studentRepository.existsByEnrollmentNumberIgnoreCase(request.enrollmentNumber())) {
             throw new EnrollmentNumberAlreadyInUseException();
         }
 
@@ -50,9 +66,7 @@ public class StudentService {
     public PagedResponse<StudentResponse> findAll(int page, int size) {
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "fullName"));
 
-        Page<StudentResponse> students = studentRepository
-                .findAll(pageable)
-                .map(StudentResponse::from);
+        Page<StudentResponse> students = studentRepository.findAll(pageable).map(StudentResponse::from);
 
         return PagedResponse.from(students);
     }
@@ -62,14 +76,19 @@ public class StudentService {
     }
 
     @Transactional
-    public StudentResponse update(UUID studentId, StudentRequest request) {
+    public StudentResponse update(UUID studentId, StudentRequest request, String authenticatedEmail) {
+        return auditedOperation.execute(
+                AuditAction.STUDENT_UPDATE,
+                studentId,
+                studentId,
+                authenticatedEmail,
+                () -> updateStudent(studentId, request), StudentResponse::id);
+    }
+
+    private StudentResponse updateStudent(UUID studentId, StudentRequest request) {
         Student student = findStudent(studentId);
 
-        if (studentRepository
-                .existsByEnrollmentNumberIgnoreCaseAndIdNot(
-                        request.enrollmentNumber(),
-                        studentId
-                )) {
+        if (studentRepository.existsByEnrollmentNumberIgnoreCaseAndIdNot(request.enrollmentNumber(), studentId)) {
             throw new EnrollmentNumberAlreadyInUseException();
         }
 
@@ -87,7 +106,20 @@ public class StudentService {
     }
 
     @Transactional
-    public StudentResponse updateStatus(UUID studentId, UpdateStudentStatusRequest request) {
+    public StudentResponse updateStatus(
+            UUID studentId,
+            UpdateStudentStatusRequest request,
+            String authenticatedEmail
+    ) {
+        return auditedOperation.execute(
+                AuditAction.STUDENT_STATUS_UPDATE,
+                studentId,
+                studentId,
+                authenticatedEmail,
+                () -> updateStudentStatus(studentId, request), StudentResponse::id);
+    }
+
+    private StudentResponse updateStudentStatus(UUID studentId, UpdateStudentStatusRequest request) {
         Student student = findStudent(studentId);
 
         if (request.active()) {
@@ -100,8 +132,7 @@ public class StudentService {
     }
 
     private Student findStudent(UUID studentId) {
-        return studentRepository.findById(studentId)
-                .orElseThrow(() -> new StudentNotFoundException(studentId));
+        return studentRepository.findById(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
     }
 
     private Student save(Student student) {

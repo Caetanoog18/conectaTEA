@@ -15,6 +15,10 @@ import com.github.caetanoog18.conectatea.identity.domain.UserRole;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
+import com.github.caetanoog18.conectatea.audit.domain.AuditOutcome;
+import com.github.caetanoog18.conectatea.audit.infrastructure.AuditEventRepository;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,11 +29,13 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -38,6 +44,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(properties = {
@@ -69,11 +76,14 @@ class ConsentManagementIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AuditEventRepository auditEventRepository;
+
     @Test
     void administratorShouldCreateConsent() throws Exception {
         TestContext context = persistContext(true);
 
-        mockMvc.perform(
+        MvcResult result = mockMvc.perform(
                         post("/api/student-guardian-links/{linkId}/consents", context.link().getId())
                                 .with(withRole("ADMINISTRATOR", ADMIN_EMAIL))
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -86,9 +96,24 @@ class ConsentManagementIntegrationTest {
                 .andExpect(jsonPath("$.guardianId").value(context.guardian().getId().toString()))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
                 .andExpect(jsonPath("$.termsVersion").value("1.0"))
-                .andExpect(jsonPath("$.purposes.length()").value(2));
+                .andExpect(jsonPath("$.purposes.length()").value(2))
+                .andExpect(header().exists("X-Request-ID"))
+                .andReturn();
 
         assertThat(consentRepository.count()).isEqualTo(1);
+
+        String requestIdHeader = result.getResponse().getHeader("X-Request-ID");
+
+        assertThat(requestIdHeader).isNotBlank();
+
+        UUID requestId = UUID.fromString(requestIdHeader);
+
+        var event = auditEventRepository.findAllByRequestIdOrderByOccurredAtAscIdAsc(requestId).getFirst();
+
+        assertThat(event.getAction()).isEqualTo(AuditAction.CONSENT_CREATE);
+        assertThat(event.getOutcome()).isEqualTo(AuditOutcome.SUCCESS);
+        assertThat(event.getStudentId()).isEqualTo(context.student().getId());
+        assertThat(event.getResourceId()).isNotNull();
     }
 
     @Test
@@ -163,10 +188,7 @@ class ConsentManagementIntegrationTest {
 
         mockMvc.perform(
                         get("/api/student-guardian-links/{linkId}" + "/consents", context.link().getId())
-                                .with(withRole(
-                                        "ADMINISTRATOR",
-                                        ADMIN_EMAIL
-                                ))
+                                .with(withRole("ADMINISTRATOR", ADMIN_EMAIL))
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -212,7 +234,7 @@ class ConsentManagementIntegrationTest {
         TestContext context = persistContext(true);
         ConsentTerm consent = persistActiveConsent(context);
 
-        mockMvc.perform(
+        MvcResult result = mockMvc.perform(
                         patch("/api/consents/{consentId}/revoke", consent.getId())
                                 .with(withRole(
                                         "ADMINISTRATOR",
@@ -228,19 +250,28 @@ class ConsentManagementIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("REVOKED"))
                 .andExpect(jsonPath("$.revokedAt").isNotEmpty())
-                .andExpect(jsonPath("$.revokedByUserId")
-                        .value(
-                                context.administrator()
-                                        .getId()
-                                        .toString()
-                        ))
-                .andExpect(jsonPath("$.revocationReason")
-                        .value("Guardian withdrew consent"));
+                .andExpect(jsonPath("$.revokedByUserId").value(context.administrator().getId().toString()))
+                .andExpect(jsonPath("$.revocationReason").value("Guardian withdrew consent"))
+                .andExpect(header().exists("X-Request-ID"))
+                .andReturn();
 
         ConsentTerm revokedConsent = consentRepository.findById(consent.getId()).orElseThrow();
 
         assertThat(revokedConsent.getStatus()).isEqualTo(ConsentStatus.REVOKED);
         assertThat(revokedConsent.getRevokedAt()).isNotNull();
+
+        String requestIdHeader = result.getResponse().getHeader("X-Request-ID");
+
+        assertThat(requestIdHeader).isNotBlank();
+
+        UUID requestId = UUID.fromString(requestIdHeader);
+
+        var event = auditEventRepository.findAllByRequestIdOrderByOccurredAtAscIdAsc(requestId).getFirst();
+
+        assertThat(event.getAction()).isEqualTo(AuditAction.CONSENT_REVOKE);
+        assertThat(event.getOutcome()).isEqualTo(AuditOutcome.SUCCESS);
+        assertThat(event.getStudentId()).isEqualTo(context.student().getId());
+        assertThat(event.getResourceId()).isEqualTo(consent.getId());
     }
 
     @Test

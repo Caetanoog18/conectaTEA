@@ -1,6 +1,10 @@
 package com.github.caetanoog18.conectatea.guardian;
 
 import com.github.caetanoog18.conectatea.TestcontainersConfiguration;
+import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
+import com.github.caetanoog18.conectatea.audit.domain.AuditEvent;
+import com.github.caetanoog18.conectatea.audit.domain.AuditOutcome;
+import com.github.caetanoog18.conectatea.audit.infrastructure.AuditEventRepository;
 import com.github.caetanoog18.conectatea.guardian.domain.Guardian;
 import com.github.caetanoog18.conectatea.guardian.infrastructure.GuardianRepository;
 import com.github.caetanoog18.conectatea.identity.domain.User;
@@ -14,6 +18,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,46 +46,48 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class GuardianManagementIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private GuardianRepository guardianRepository;
-
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private AuditEventRepository auditEventRepository;
 
     @Test
     void administratorShouldCreateGuardian() throws Exception {
-        mockMvc.perform(
+        MvcResult result = mockMvc.perform(
                         post("/api/guardians")
                                 .with(withRole("ADMINISTRATOR"))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(guardianRequestBody(null))
-                )
+                                .content(guardianRequestBody(null)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
-                .andExpect(jsonPath("$.fullName")
-                        .value("Maria da Silva"))
-                .andExpect(jsonPath("$.cpf")
-                        .value("52998224725"))
-                .andExpect(jsonPath("$.email")
-                        .value("maria@example.com"))
-                .andExpect(jsonPath("$.phone")
-                        .value("47999999999"))
-                .andExpect(jsonPath("$.active").value(true));
+                .andExpect(jsonPath("$.fullName").value("Maria da Silva"))
+                .andExpect(jsonPath("$.cpf").value("52998224725"))
+                .andExpect(jsonPath("$.email").value("maria@example.com"))
+                .andExpect(jsonPath("$.phone").value("47999999999"))
+                .andExpect(jsonPath("$.active").value(true))
+                .andExpect(header().exists("X-Request-ID"))
+                .andReturn();
 
         assertThat(guardianRepository.count()).isEqualTo(1);
+
+        Guardian savedGuardian = guardianRepository.findByCpf("52998224725").orElseThrow();
+        AuditEvent event = auditEventFrom(result);
+
+        assertThat(event.getAction()).isEqualTo(AuditAction.GUARDIAN_CREATE);
+        assertThat(event.getOutcome()).isEqualTo(AuditOutcome.SUCCESS);
+        assertThat(event.getStudentId()).isNull();
+        assertThat(event.getResourceId()).isEqualTo(savedGuardian.getId());
     }
 
     @Test
     void coordinatorShouldCreateGuardian() throws Exception {
         mockMvc.perform(
                         post("/api/guardians")
-                                .with(withRole(
-                                        "PEDAGOGICAL_COORDINATOR"
-                                ))
+                                .with(withRole("PEDAGOGICAL_COORDINATOR"))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(guardianRequestBody(null))
-                )
+                                .content(guardianRequestBody(null)))
                 .andExpect(status().isCreated());
 
         assertThat(guardianRepository.count()).isEqualTo(1);
@@ -87,12 +95,10 @@ class GuardianManagementIntegrationTest {
 
     @Test
     void teacherShouldNotManageGuardians() throws Exception {
-        mockMvc.perform(
-                        post("/api/guardians")
-                                .with(withRole("TEACHER"))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(guardianRequestBody(null))
-                )
+        mockMvc.perform(post("/api/guardians")
+                        .with(withRole("TEACHER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(guardianRequestBody(null)))
                 .andExpect(status().isForbidden());
 
         assertThat(guardianRepository.count()).isZero();
@@ -102,30 +108,21 @@ class GuardianManagementIntegrationTest {
     void administratorShouldListAndFindGuardian() throws Exception {
         Guardian guardian = persistGuardian(null);
 
-        mockMvc.perform(
-                        get("/api/guardians")
-                                .with(withRole("ADMINISTRATOR"))
-                                .param("page", "0")
-                                .param("size", "20")
-                )
+        mockMvc.perform(get("/api/guardians")
+                        .with(withRole("ADMINISTRATOR"))
+                        .param("page", "0")
+                        .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].fullName")
-                        .value("Maria da Silva"))
+                .andExpect(jsonPath("$.content[0].fullName").value("Maria da Silva"))
                 .andExpect(jsonPath("$.totalElements").value(1));
 
         mockMvc.perform(
-                        get(
-                                "/api/guardians/{guardianId}",
-                                guardian.getId()
-                        )
-                                .with(withRole("ADMINISTRATOR"))
-                )
+                        get("/api/guardians/{guardianId}", guardian.getId())
+                                .with(withRole("ADMINISTRATOR")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id")
-                        .value(guardian.getId().toString()))
-                .andExpect(jsonPath("$.cpf")
-                        .value("52998224725"));
+                .andExpect(jsonPath("$.id").value(guardian.getId().toString()))
+                .andExpect(jsonPath("$.cpf").value("52998224725"));
     }
 
     @Test
@@ -141,45 +138,49 @@ class GuardianManagementIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(
-                        put(
-                                "/api/guardians/{guardianId}",
-                                guardian.getId()
-                        )
+        MvcResult updateResult = mockMvc.perform(
+                        put("/api/guardians/{guardianId}", guardian.getId())
                                 .with(withRole("ADMINISTRATOR"))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(updateBody)
-                )
+                                .content(updateBody))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.fullName")
-                        .value("Maria Oliveira da Silva"))
-                .andExpect(jsonPath("$.email")
-                        .value("nova@example.com"))
-                .andExpect(jsonPath("$.phone")
-                        .value("47988887777"));
+                .andExpect(jsonPath("$.fullName").value("Maria Oliveira da Silva"))
+                .andExpect(jsonPath("$.email").value("nova@example.com"))
+                .andExpect(jsonPath("$.phone").value("47988887777"))
+                .andExpect(header().exists("X-Request-ID"))
+                .andReturn();
 
-        mockMvc.perform(
-                        patch(
-                                "/api/guardians/{guardianId}/status",
-                                guardian.getId()
-                        )
+        AuditEvent updateEvent = auditEventFrom(updateResult);
+
+        assertThat(updateEvent.getAction()).isEqualTo(AuditAction.GUARDIAN_UPDATE);
+        assertThat(updateEvent.getOutcome()).isEqualTo(AuditOutcome.SUCCESS);
+        assertThat(updateEvent.getStudentId()).isNull();
+        assertThat(updateEvent.getResourceId()).isEqualTo(guardian.getId());
+
+        MvcResult statusResult = mockMvc.perform(
+                        patch("/api/guardians/{guardianId}/status", guardian.getId())
                                 .with(withRole("ADMINISTRATOR"))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
                                           "active": false
                                         }
-                                        """)
-                )
+                                        """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.active").value(false));
+                .andExpect(jsonPath("$.active").value(false))
+                .andExpect(header().exists("X-Request-ID"))
+                .andReturn();
 
-        Guardian updated = guardianRepository
-                .findById(guardian.getId())
-                .orElseThrow();
+        AuditEvent statusEvent = auditEventFrom(statusResult);
 
-        assertThat(updated.getFullName())
-                .isEqualTo("Maria Oliveira da Silva");
+        assertThat(statusEvent.getAction()).isEqualTo(AuditAction.GUARDIAN_STATUS_UPDATE);
+        assertThat(statusEvent.getOutcome()).isEqualTo(AuditOutcome.SUCCESS);
+        assertThat(statusEvent.getStudentId()).isNull();
+        assertThat(statusEvent.getResourceId()).isEqualTo(guardian.getId());
+
+        Guardian updated = guardianRepository.findById(guardian.getId()).orElseThrow();
+
+        assertThat(updated.getFullName()).isEqualTo("Maria Oliveira da Silva");
         assertThat(updated.isActive()).isFalse();
     }
 
@@ -191,11 +192,9 @@ class GuardianManagementIntegrationTest {
                         post("/api/guardians")
                                 .with(withRole("ADMINISTRATOR"))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(guardianRequestBody(null))
-                )
+                                .content(guardianRequestBody(null)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.title")
-                        .value("CPF already in use"));
+                .andExpect(jsonPath("$.title").value("CPF already in use"));
 
         assertThat(guardianRepository.count()).isEqualTo(1);
     }
@@ -215,20 +214,12 @@ class GuardianManagementIntegrationTest {
                         post("/api/guardians")
                                 .with(withRole("ADMINISTRATOR"))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        guardianRequestBody(user.getId())
-                                )
-                )
+                                .content(guardianRequestBody(user.getId())))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.userId")
-                        .value(user.getId().toString()));
+                .andExpect(jsonPath("$.userId").value(user.getId().toString()));
 
-        Guardian savedGuardian = guardianRepository
-                .findByCpf("52998224725")
-                .orElseThrow();
-
-        assertThat(savedGuardian.getUserId())
-                .isEqualTo(user.getId());
+        Guardian savedGuardian = guardianRepository.findByCpf("52998224725").orElseThrow();
+        assertThat(savedGuardian.getUserId()).isEqualTo(user.getId());
     }
 
     @Test
@@ -246,15 +237,9 @@ class GuardianManagementIntegrationTest {
                         post("/api/guardians")
                                 .with(withRole("ADMINISTRATOR"))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        guardianRequestBody(
-                                                teacher.getId()
-                                        )
-                                )
-                )
+                                .content(guardianRequestBody(teacher.getId())))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.title")
-                        .value("Invalid guardian user"));
+                .andExpect(jsonPath("$.title").value("Invalid guardian user"));
 
         assertThat(guardianRepository.count()).isZero();
     }
@@ -262,34 +247,25 @@ class GuardianManagementIntegrationTest {
     @Test
     void missingGuardianShouldReturnNotFound() throws Exception {
         mockMvc.perform(
-                        get(
-                                "/api/guardians/{guardianId}",
-                                UUID.randomUUID()
-                        )
-                                .with(withRole("ADMINISTRATOR"))
-                )
+                        get("/api/guardians/{guardianId}", UUID.randomUUID())
+                                .with(withRole("ADMINISTRATOR")))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.title")
-                        .value("Guardian not found"));
+                .andExpect(jsonPath("$.title").value("Guardian not found"));
     }
 
     @Test
     void unauthenticatedRequestShouldBeRejected() throws Exception {
-        mockMvc.perform(get("/api/guardians"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/guardians")).andExpect(status().isUnauthorized());
     }
 
     @Test
     void statusUpdateWithoutActiveShouldBeRejected() throws Exception {
         mockMvc.perform(
                         patch(
-                                "/api/guardians/{guardianId}/status",
-                                UUID.randomUUID()
-                        )
+                                "/api/guardians/{guardianId}/status", UUID.randomUUID())
                                 .with(withRole("ADMINISTRATOR"))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content("{}")
-                )
+                                .content("{}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -305,9 +281,7 @@ class GuardianManagementIntegrationTest {
     }
 
     private static String guardianRequestBody(UUID userId) {
-        String userIdJson = userId == null
-                ? "null"
-                : "\"" + userId + "\"";
+        String userIdJson = userId == null ? "null" : "\"" + userId + "\"";
 
         return """
                 {
@@ -322,5 +296,14 @@ class GuardianManagementIntegrationTest {
 
     private static RequestPostProcessor withRole(String role) {
         return jwt().authorities(new SimpleGrantedAuthority("ROLE_" + role));
+    }
+
+    private AuditEvent auditEventFrom(MvcResult result) {
+        String requestIdHeader = result.getResponse().getHeader("X-Request-ID");
+        assertThat(requestIdHeader).isNotBlank();
+        UUID requestId = UUID.fromString(requestIdHeader);
+        var events = auditEventRepository.findAllByRequestIdOrderByOccurredAtAscIdAsc(requestId);
+        assertThat(events).hasSize(1);
+        return events.getFirst();
     }
 }

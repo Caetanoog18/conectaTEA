@@ -1,5 +1,7 @@
 package com.github.caetanoog18.conectatea.careteam.application;
 
+import com.github.caetanoog18.conectatea.audit.application.AuditedOperation;
+import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
 import com.github.caetanoog18.conectatea.careteam.api.dto.CreateProfessionalLinkRequest;
 import com.github.caetanoog18.conectatea.careteam.api.dto.EndProfessionalLinkRequest;
 import com.github.caetanoog18.conectatea.careteam.api.dto.ProfessionalLinkResponse;
@@ -38,19 +40,39 @@ public class CareTeamService {
     private final StudentProfessionalLinkRepository linkRepository;
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
+    private final AuditedOperation auditedOperation;
 
     public CareTeamService(
             StudentProfessionalLinkRepository linkRepository,
             StudentRepository studentRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            AuditedOperation auditedOperation
     ) {
         this.linkRepository = linkRepository;
         this.studentRepository = studentRepository;
         this.userRepository = userRepository;
+        this.auditedOperation = auditedOperation;
     }
 
     @Transactional
-    public ProfessionalLinkResponse create(UUID studentId, CreateProfessionalLinkRequest request, String authenticatedEmail) {
+    public ProfessionalLinkResponse create(
+            UUID studentId,
+            CreateProfessionalLinkRequest request,
+            String authenticatedEmail
+    ) {
+        return auditedOperation.execute(
+                AuditAction.CARE_TEAM_LINK_CREATE,
+                studentId,
+                null,
+                authenticatedEmail,
+                () -> createLink(studentId, request, authenticatedEmail), ProfessionalLinkResponse::id);
+    }
+
+    private ProfessionalLinkResponse createLink(
+            UUID studentId,
+            CreateProfessionalLinkRequest request,
+            String authenticatedEmail
+    ) {
         User manager = requireActiveManager(authenticatedEmail);
         Student student = findStudent(studentId);
         User professional = findProfessional(request.professionalId());
@@ -75,12 +97,8 @@ public class CareTeamService {
             throw new CareTeamConflictException("Professional already has an active link with this student");
         }
 
-        StudentProfessionalLink link = new StudentProfessionalLink(
-                student,
-                professional,
-                request.startedOn(),
-                manager.getId()
-        );
+        StudentProfessionalLink link =
+                new StudentProfessionalLink(student, professional, request.startedOn(), manager.getId());
 
         try {
             return ProfessionalLinkResponse.from(linkRepository.saveAndFlush(link));
@@ -94,9 +112,7 @@ public class CareTeamService {
         findStudent(studentId);
 
         return linkRepository
-                .findAllByStudent_IdOrderByProfessional_FullNameAsc(
-                        studentId
-                )
+                .findAllByStudent_IdOrderByProfessional_FullNameAsc(studentId)
                 .stream()
                 .map(ProfessionalLinkResponse::from)
                 .toList();
@@ -104,18 +120,41 @@ public class CareTeamService {
 
     public ProfessionalLinkResponse findById(UUID linkId, String authenticatedEmail) {
         requireActiveManager(authenticatedEmail);
+
         StudentProfessionalLink link = linkRepository
                 .findById(linkId)
-                .orElseThrow(() -> new CareTeamNotFoundException(
-                        "Professional link not found: " + linkId
-                ));
+                .orElseThrow(() -> new CareTeamNotFoundException("Professional link not found: " + linkId));
 
         return ProfessionalLinkResponse.from(link);
     }
 
     @Transactional
-    public ProfessionalLinkResponse end(UUID linkId, EndProfessionalLinkRequest request, String authenticatedEmail) {
+    public ProfessionalLinkResponse end(
+            UUID linkId,
+            EndProfessionalLinkRequest request,
+            String authenticatedEmail
+    ) {
+        StudentProfessionalLink existingLink = linkRepository
+                .findById(linkId)
+                .orElseThrow(() -> new CareTeamNotFoundException("Professional link not found: " + linkId));
+
+        UUID studentId = existingLink.getStudent().getId();
+
+        return auditedOperation.execute(
+                AuditAction.CARE_TEAM_LINK_END,
+                studentId,
+                linkId,
+                authenticatedEmail,
+                () -> endLink(linkId, request, authenticatedEmail), ProfessionalLinkResponse::id);
+    }
+
+    private ProfessionalLinkResponse endLink(
+            UUID linkId,
+            EndProfessionalLinkRequest request,
+            String authenticatedEmail
+    ) {
         User manager = requireActiveManager(authenticatedEmail);
+
         StudentProfessionalLink link = linkRepository
                 .findByIdForUpdate(linkId)
                 .orElseThrow(() -> new CareTeamNotFoundException("Professional link not found: " + linkId));
@@ -150,11 +189,11 @@ public class CareTeamService {
             throw new AccessDeniedException("An active manager account is required");
         }
 
-        User user = userRepository.findByEmailIgnoreCase(email)
+        User user = userRepository
+                .findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new AccessDeniedException("An active manager account is required"));
 
-        boolean managerRole =
-                user.getRole() == UserRole.ADMINISTRATOR || user.getRole() == UserRole.PEDAGOGICAL_COORDINATOR;
+        boolean managerRole = user.getRole() == UserRole.ADMINISTRATOR || user.getRole() == UserRole.PEDAGOGICAL_COORDINATOR;
 
         if (!user.isActive() || !managerRole) {
             throw new AccessDeniedException("An active manager account is required");

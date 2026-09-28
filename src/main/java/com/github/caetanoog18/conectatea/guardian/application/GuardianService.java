@@ -1,5 +1,7 @@
 package com.github.caetanoog18.conectatea.guardian.application;
 
+import com.github.caetanoog18.conectatea.audit.application.AuditedOperation;
+import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
 import com.github.caetanoog18.conectatea.guardian.api.dto.GuardianRequest;
 import com.github.caetanoog18.conectatea.guardian.api.dto.GuardianResponse;
 import com.github.caetanoog18.conectatea.guardian.api.dto.UpdateGuardianStatusRequest;
@@ -27,18 +29,31 @@ import java.util.UUID;
 public class GuardianService {
     private final GuardianRepository guardianRepository;
     private final UserRepository userRepository;
-
+    private final AuditedOperation auditedOperation;
 
     public GuardianService(
             GuardianRepository guardianRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            AuditedOperation auditedOperation
     ) {
         this.guardianRepository = guardianRepository;
         this.userRepository = userRepository;
+        this.auditedOperation = auditedOperation;
     }
 
     @Transactional
-    public GuardianResponse create(GuardianRequest request) {
+    public GuardianResponse create(GuardianRequest request, String authenticatedEmail) {
+        return auditedOperation.execute(
+                AuditAction.GUARDIAN_CREATE,
+                null,
+                null,
+                authenticatedEmail,
+                () -> createGuardian(request),
+                GuardianResponse::id
+        );
+    }
+
+    private GuardianResponse createGuardian(GuardianRequest request) {
         String normalizedCpf = normalizeDigits(request.cpf());
 
         validateCpf(normalizedCpf, null);
@@ -56,15 +71,8 @@ public class GuardianService {
     }
 
     public PagedResponse<GuardianResponse> findAll(int page, int size) {
-        PageRequest pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(Sort.Direction.ASC, "fullName")
-        );
-
-        Page<GuardianResponse> guardians = guardianRepository
-                .findAll(pageable)
-                .map(GuardianResponse::from);
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "fullName"));
+        Page<GuardianResponse> guardians = guardianRepository.findAll(pageable).map(GuardianResponse::from);
 
         return PagedResponse.from(guardians);
     }
@@ -74,10 +82,18 @@ public class GuardianService {
     }
 
     @Transactional
-    public GuardianResponse update(
-            UUID guardianId,
-            GuardianRequest request
-    ) {
+    public GuardianResponse update(UUID guardianId, GuardianRequest request, String authenticatedEmail) {
+        return auditedOperation.execute(
+                AuditAction.GUARDIAN_UPDATE,
+                null,
+                guardianId,
+                authenticatedEmail,
+                () -> updateGuardian(guardianId, request),
+                GuardianResponse::id
+        );
+    }
+
+    private GuardianResponse updateGuardian(UUID guardianId, GuardianRequest request) {
         Guardian guardian = findGuardian(guardianId);
         String normalizedCpf = normalizeDigits(request.cpf());
 
@@ -96,7 +112,18 @@ public class GuardianService {
     }
 
     @Transactional
-    public GuardianResponse updateStatus(UUID guardianId, UpdateGuardianStatusRequest request) {
+    public GuardianResponse updateStatus(UUID guardianId, UpdateGuardianStatusRequest request, String authenticatedEmail) {
+        return auditedOperation.execute(
+                AuditAction.GUARDIAN_STATUS_UPDATE,
+                null,
+                guardianId,
+                authenticatedEmail,
+                () -> updateGuardianStatus(guardianId, request),
+                GuardianResponse::id
+        );
+    }
+
+    private GuardianResponse updateGuardianStatus(UUID guardianId, UpdateGuardianStatusRequest request) {
         Guardian guardian = findGuardian(guardianId);
 
         if (request.active()) {
@@ -105,16 +132,11 @@ public class GuardianService {
             guardian.deactivate();
         }
 
-        return GuardianResponse.from(
-                guardianRepository.saveAndFlush(guardian)
-        );
+        return GuardianResponse.from(guardianRepository.saveAndFlush(guardian));
     }
 
     private Guardian findGuardian(UUID guardianId) {
-        return guardianRepository.findById(guardianId)
-                .orElseThrow(
-                        () -> new GuardianNotFoundException(guardianId)
-                );
+        return guardianRepository.findById(guardianId).orElseThrow(() -> new GuardianNotFoundException(guardianId));
     }
 
     private void validateCpf(String normalizedCpf, UUID currentGuardianId) {
@@ -124,10 +146,7 @@ public class GuardianService {
 
         boolean exists = currentGuardianId == null
                 ? guardianRepository.existsByCpf(normalizedCpf)
-                : guardianRepository.existsByCpfAndIdNot(
-                normalizedCpf,
-                currentGuardianId
-        );
+                : guardianRepository.existsByCpfAndIdNot(normalizedCpf, currentGuardianId);
 
         if (exists) {
             throw new CpfAlreadyInUseException();
@@ -139,8 +158,7 @@ public class GuardianService {
             return;
         }
 
-        var user = userRepository.findById(userId)
-                .orElseThrow(InvalidGuardianUserException::new);
+        var user = userRepository.findById(userId).orElseThrow(InvalidGuardianUserException::new);
 
         if (user.getRole() != UserRole.LEGAL_GUARDIAN) {
             throw new InvalidGuardianUserException();
@@ -148,10 +166,7 @@ public class GuardianService {
 
         boolean linked = currentGuardianId == null
                 ? guardianRepository.existsByUserId(userId)
-                : guardianRepository.existsByUserIdAndIdNot(
-                userId,
-                currentGuardianId
-        );
+                : guardianRepository.existsByUserIdAndIdNot(userId, currentGuardianId);
 
         if (linked) {
             throw new GuardianUserAlreadyLinkedException();

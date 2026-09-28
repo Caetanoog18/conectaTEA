@@ -21,6 +21,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
+import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
+import com.github.caetanoog18.conectatea.audit.domain.AuditEvent;
+import com.github.caetanoog18.conectatea.audit.domain.AuditOutcome;
+import com.github.caetanoog18.conectatea.audit.infrastructure.AuditEventRepository;
+import org.springframework.test.web.servlet.MvcResult;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -58,6 +65,9 @@ class CareTeamManagementIntegrationTest {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private AuditEventRepository auditEventRepository;
 
     private User administrator;
     private User professional;
@@ -388,6 +398,20 @@ class CareTeamManagementIntegrationTest {
                                 "ROLE_" + user.getRole().name()
                         )
                 );
+    }
+
+    private AuditEvent auditEventFrom(MvcResult result) {
+        String requestIdHeader = result.getResponse().getHeader("X-Request-ID");
+
+        assertThat(requestIdHeader).isNotBlank();
+
+        UUID requestId = UUID.fromString(requestIdHeader);
+
+        var events = auditEventRepository.findAllByRequestIdOrderByOccurredAtAscIdAsc(requestId);
+
+        assertThat(events).hasSize(1);
+
+        return events.getFirst();
     }
 
     private static LocalDate today() {

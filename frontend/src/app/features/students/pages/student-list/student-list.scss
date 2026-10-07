@@ -1,0 +1,149 @@
+.student-page {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    color: #183d36;
+    font-size: 2rem;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+    color: #60736e;
+  }
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  color: #157565;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.total {
+  color: #536963;
+  font-size: 0.9rem;
+}
+
+.table-container {
+  overflow-x: auto;
+  border: 1px solid #dbe4e1;
+  border-radius: 0.75rem;
+  background: #ffffff;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 1rem;
+  border-bottom: 1px solid #e5ecea;
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  color: #39564f;
+  background: #f6f9f8;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+td {
+  color: #435b55;
+
+  strong,
+  small {
+    display: block;
+  }
+
+  small {
+    margin-top: 0.25rem;
+    color: #71827e;
+  }
+}
+
+.status {
+  display: inline-flex;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  color: #126353;
+  background: #dcefe9;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  &.inactive {
+    color: #7a342e;
+    background: #f5dfdc;
+  }
+}
+
+.message {
+  padding: 2rem;
+  border: 1px solid #dbe4e1;
+  border-radius: 0.75rem;
+  text-align: center;
+  background: #ffffff;
+
+  &.error {
+    color: #a02c24;
+  }
+
+  button {
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    border: 0;
+    border-radius: 0.5rem;
+    color: #ffffff;
+    background: #176b5b;
+    cursor: pointer;
+  }
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+
+  button {
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    border: 1px solid #b8c8c4;
+    border-radius: 0.5rem;
+    color: #264d45;
+    background: #ffffff;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+  }
+}
+
+@media (max-width: 40rem) {
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

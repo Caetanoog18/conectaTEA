@@ -1,0 +1,119 @@
+<section class="student-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Cadastros</p>
+      <h1>Estudantes</h1>
+      <p>
+        Consulte os estudantes cadastrados na instituição.
+      </p>
+    </div>
+
+    <span class="total">
+      {{ totalElements() }}
+      {{ totalElements() === 1 ? 'estudante' : 'estudantes' }}
+    </span>
+  </header>
+
+  @if (loading()) {
+    <div
+      class="message"
+      role="status"
+    >
+      Carregando estudantes...
+    </div>
+  } @else if (errorMessage()) {
+    <div
+      class="message error"
+      role="alert"
+    >
+      <p>{{ errorMessage() }}</p>
+
+      <button
+        type="button"
+        (click)="loadPage(currentPage())"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (students().length === 0) {
+    <div class="message">
+      Nenhum estudante cadastrado.
+    </div>
+  } @else {
+    <div class="table-container">
+      <table>
+        <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Matrícula</th>
+          <th>Ano</th>
+          <th>Turma</th>
+          <th>Nascimento</th>
+          <th>Status</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (student of students();
+            track student.id) {
+            <tr>
+              <td>
+                <strong>{{ student.fullName }}</strong>
+
+                @if (student.preferredName) {
+                  <small>
+                    Nome preferido:
+                    {{ student.preferredName }}
+                  </small>
+                }
+              </td>
+
+              <td>{{ student.enrollmentNumber }}</td>
+              <td>
+                {{ student.schoolYear }} —
+                {{ student.gradeLevel }}
+              </td>
+              <td>{{ student.className }}</td>
+              <td>
+                {{ student.birthDate | date:'dd/MM/yyyy':'UTC' }}
+              </td>
+              <td>
+                <span
+                  class="status"
+                  [class.inactive]="!student.active"
+                >
+                  {{ student.active ? 'Ativo' : 'Inativo' }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pagination">
+      <button
+        type="button"
+        [disabled]="currentPage() === 0"
+        (click)="previousPage()"
+      >
+        Anterior
+      </button>
+
+      <span>
+        Página {{ currentPage() + 1 }}
+        de {{ totalPages() }}
+      </span>
+
+      <button
+        type="button"
+        [disabled]="
+          currentPage() + 1 >= totalPages()
+        "
+        (click)="nextPage()"
+      >
+        Próxima
+      </button>
+    </footer>
+  }
+</section>

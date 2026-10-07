@@ -8,10 +8,19 @@
       </p>
     </div>
 
-    <span class="total">
-      {{ totalElements() }}
-      {{ totalElements() === 1 ? 'estudante' : 'estudantes' }}
-    </span>
+    <div class="header-actions">
+      <span class="total">
+        {{ totalElements() }}
+        {{ totalElements() === 1 ? 'estudante' : 'estudantes' }}
+      </span>
+
+      <a
+        routerLink="/students/new"
+        class="primary-button"
+      >
+        Novo estudante
+      </a>
+    </div>
   </header>
 
   @if (loading()) {
@@ -37,7 +46,14 @@
     </div>
   } @else if (students().length === 0) {
     <div class="message">
-      Nenhum estudante cadastrado.
+      <p>Nenhum estudante cadastrado.</p>
+
+      <a
+        routerLink="/students/new"
+        class="primary-button"
+      >
+        Cadastrar primeiro estudante
+      </a>
     </div>
   } @else {
     <div class="table-container">
@@ -50,15 +66,17 @@
           <th>Turma</th>
           <th>Nascimento</th>
           <th>Status</th>
+          <th>Ações</th>
         </tr>
         </thead>
 
         <tbody>
-          @for (student of students();
-            track student.id) {
+          @for (student of students(); track student.id) {
             <tr>
               <td>
-                <strong>{{ student.fullName }}</strong>
+                <strong>
+                  {{ student.fullName }}
+                </strong>
 
                 @if (student.preferredName) {
                   <small>
@@ -68,15 +86,26 @@
                 }
               </td>
 
-              <td>{{ student.enrollmentNumber }}</td>
+              <td>
+                {{ student.enrollmentNumber }}
+              </td>
+
               <td>
                 {{ student.schoolYear }} —
                 {{ student.gradeLevel }}
               </td>
-              <td>{{ student.className }}</td>
+
               <td>
-                {{ student.birthDate | date:'dd/MM/yyyy':'UTC' }}
+                {{ student.className }}
               </td>
+
+              <td>
+                {{
+                  student.birthDate
+                    | date:'dd/MM/yyyy':'UTC'
+                }}
+              </td>
+
               <td>
                 <span
                   class="status"
@@ -84,6 +113,22 @@
                 >
                   {{ student.active ? 'Ativo' : 'Inativo' }}
                 </span>
+              </td>
+
+              <td>
+                <a
+                  class="edit-link"
+                  [routerLink]="[
+                    '/students',
+                    student.id,
+                    'edit'
+                  ]"
+                  [attr.aria-label]="
+                    'Editar estudante ' + student.fullName
+                  "
+                >
+                  Editar
+                </a>
               </td>
             </tr>
           }

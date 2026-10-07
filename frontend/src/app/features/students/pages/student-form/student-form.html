@@ -1,0 +1,157 @@
+<section class="student-form-page">
+  <header class="page-header">
+    <div>
+      <span class="page-eyebrow">CADASTROS</span>
+
+      <h1>
+        {{ editMode ? 'Editar estudante' : 'Novo estudante' }}
+      </h1>
+
+      <p>
+        {{
+          editMode
+            ? 'Atualize os dados cadastrais do estudante.'
+            : 'Informe os dados para cadastrar um estudante.'
+        }}
+      </p>
+    </div>
+
+    <a routerLink="/students" class="secondary-button">
+      Voltar
+    </a>
+  </header>
+
+  @if (loading()) {
+    <div class="message">Carregando estudante...</div>
+  } @else {
+    @if (errorMessage()) {
+      <div class="error-message" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <form
+      class="student-form"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+    >
+      <div class="form-field full-width">
+        <label for="fullName">Nome completo</label>
+
+        <input
+          id="fullName"
+          type="text"
+          formControlName="fullName"
+        />
+
+        @if (hasError('fullName', 'required')) {
+          <small>O nome completo é obrigatório.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="preferredName">Nome preferido</label>
+
+        <input
+          id="preferredName"
+          type="text"
+          formControlName="preferredName"
+        />
+      </div>
+
+      <div class="form-field">
+        <label for="birthDate">Data de nascimento</label>
+
+        <input
+          id="birthDate"
+          type="date"
+          formControlName="birthDate"
+        />
+
+        @if (hasError('birthDate', 'required')) {
+          <small>A data de nascimento é obrigatória.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="enrollmentNumber">Matrícula</label>
+
+        <input
+          id="enrollmentNumber"
+          type="text"
+          formControlName="enrollmentNumber"
+        />
+
+        @if (hasError('enrollmentNumber', 'required')) {
+          <small>A matrícula é obrigatória.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="schoolYear">Ano letivo</label>
+
+        <input
+          id="schoolYear"
+          type="number"
+          formControlName="schoolYear"
+        />
+
+        @if (hasError('schoolYear', 'required') ||
+        hasError('schoolYear', 'min') ||
+        hasError('schoolYear', 'max')) {
+          <small>Informe um ano letivo válido.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="gradeLevel">Série/Ano</label>
+
+        <input
+          id="gradeLevel"
+          type="text"
+          formControlName="gradeLevel"
+          placeholder="Ex.: 5º ano"
+        />
+
+        @if (hasError('gradeLevel', 'required')) {
+          <small>A série é obrigatória.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="className">Turma</label>
+
+        <input
+          id="className"
+          type="text"
+          formControlName="className"
+          placeholder="Ex.: Turma B"
+        />
+
+        @if (hasError('className', 'required')) {
+          <small>A turma é obrigatória.</small>
+        }
+      </div>
+
+      <footer class="form-actions">
+        <a routerLink="/students" class="secondary-button">
+          Cancelar
+        </a>
+
+        <button
+          type="submit"
+          class="primary-button"
+          [disabled]="saving()"
+        >
+          {{
+            saving()
+              ? 'Salvando...'
+              : editMode
+                ? 'Salvar alterações'
+                : 'Cadastrar estudante'
+          }}
+        </button>
+      </footer>
+    </form>
+  }
+</section>

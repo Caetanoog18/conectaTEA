@@ -1,21 +1,23 @@
 import {ChangeDetectionStrategy, Component, inject, OnInit, signal} from '@angular/core';
-import {DatePipe} from '@angular/common';
-import {HttpErrorResponse} from '@angular/common/http';
-import {finalize} from 'rxjs';
-
-import {Student} from '../../data-access/student.models';
-import {StudentService} from '../../data-access/student.service';
+import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
+import { Student } from '../../data-access/student.models';
+import { StudentService } from '../../data-access/student.service';
 
 @Component({
   selector: 'app-student-list',
-  imports: [DatePipe],
+  imports: [
+    DatePipe,
+    RouterLink
+  ],
   templateUrl: './student-list.html',
   styleUrl: './student-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StudentList implements OnInit {
-  private readonly studentService =
-    inject(StudentService);
+  private readonly studentService = inject(StudentService);
 
   readonly students = signal<Student[]>([]);
   readonly loading = signal(false);
@@ -46,18 +48,14 @@ export class StudentList implements OnInit {
       .findAll(page, this.pageSize)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (response) => {
+        next: response => {
           this.students.set(response.content);
           this.currentPage.set(response.page);
-          this.totalElements.set(
-            response.totalElements
-          );
+          this.totalElements.set(response.totalElements);
           this.totalPages.set(response.totalPages);
         },
         error: (error: HttpErrorResponse) => {
-          this.errorMessage.set(
-            this.resolveErrorMessage(error)
-          );
+          this.errorMessage.set(this.resolveErrorMessage(error));
         }
       });
   }

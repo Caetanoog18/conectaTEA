@@ -1,0 +1,142 @@
+.student-form-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 2rem;
+
+  h1 {
+    margin: 0.35rem 0 0.75rem;
+    color: #173f39;
+    font-size: 2rem;
+  }
+
+  p {
+    margin: 0;
+    color: #637773;
+  }
+}
+
+.page-eyebrow {
+  color: #176b5d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.student-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  padding: 1.75rem;
+  background: #ffffff;
+  border: 1px solid #dbe5e2;
+  border-radius: 0.75rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    color: #294b45;
+    font-weight: 600;
+  }
+
+  input {
+    min-height: 2.75rem;
+    padding: 0 0.85rem;
+    border: 1px solid #cbd9d5;
+    border-radius: 0.5rem;
+    font: inherit;
+
+    &:focus {
+      border-color: #176b5d;
+      outline: 2px solid rgb(23 107 93 / 15%);
+    }
+  }
+
+  small {
+    color: #b42318;
+  }
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  border-radius: 0.5rem;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primary-button {
+  border: 1px solid #176b5d;
+  background: #176b5d;
+  color: #ffffff;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.secondary-button {
+  border: 1px solid #b9cbc6;
+  background: #ffffff;
+  color: #294b45;
+}
+
+.error-message,
+.message {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.error-message {
+  border: 1px solid #f5b7b1;
+  background: #fff1f0;
+  color: #9f231b;
+}
+
+.message {
+  color: #637773;
+}
+
+@media (max-width: 700px) {
+  .page-header {
+    flex-direction: column;
+  }
+
+  .student-form {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width,
+  .form-actions {
+    grid-column: auto;
+  }
+}

@@ -261,3 +261,70 @@ td {
     flex-wrap: wrap;
   }
 }
+
+.feedback-message {
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.5rem;
+
+  &.success {
+    border: 1px solid #9bd5c8;
+    background: #edf9f6;
+    color: #176b5d;
+  }
+
+  &.error {
+    border: 1px solid #f5b7b1;
+    background: #fff1f0;
+    color: #9f231b;
+  }
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-button {
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.4rem;
+  background: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+.deactivate-button {
+  border: 1px solid #e1aaa5;
+  color: #a32d25;
+
+  &:hover:not(:disabled) {
+    border-color: #a32d25;
+    background: #fff1f0;
+  }
+}
+
+.activate-button {
+  border: 1px solid #8fc9bb;
+  color: #176b5d;
+
+  &:hover:not(:disabled) {
+    border-color: #176b5d;
+    background: #edf9f6;
+  }
+}
+
+@media (max-width: 1100px) {
+  .row-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

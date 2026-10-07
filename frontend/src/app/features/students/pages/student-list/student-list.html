@@ -23,6 +23,24 @@
     </div>
   </header>
 
+  @if (successMessage()) {
+    <div
+      class="feedback-message success"
+      role="status"
+    >
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (actionErrorMessage()) {
+    <div
+      class="feedback-message error"
+      role="alert"
+    >
+      {{ actionErrorMessage() }}
+    </div>
+  }
+
   @if (loading()) {
     <div
       class="message"
@@ -116,19 +134,47 @@
               </td>
 
               <td>
-                <a
-                  class="edit-link"
-                  [routerLink]="[
-                    '/students',
-                    student.id,
-                    'edit'
-                  ]"
-                  [attr.aria-label]="
-                    'Editar estudante ' + student.fullName
-                  "
-                >
-                  Editar
-                </a>
+                <div class="row-actions">
+                  <a
+                    class="edit-link"
+                    [routerLink]="[
+                      '/students',
+                      student.id,
+                      'edit'
+                    ]"
+                    [attr.aria-label]="
+                      'Editar estudante ' +
+                      student.fullName
+                    "
+                  >
+                    Editar
+                  </a>
+
+                  <button
+                    type="button"
+                    class="status-button"
+                    [class.activate-button]="
+                      !student.active
+                    "
+                    [class.deactivate-button]="
+                      student.active
+                    "
+                    [disabled]="
+                      updatingStudentId() !== null
+                    "
+                    (click)="changeStatus(student)"
+                  >
+                    @if (updatingStudentId() === student.id) {
+                      Salvando...
+                    } @else {
+                      {{
+                        student.active
+                          ? 'Desativar'
+                          : 'Ativar'
+                      }}
+                    }
+                  </button>
+                </div>
               </td>
             </tr>
           }

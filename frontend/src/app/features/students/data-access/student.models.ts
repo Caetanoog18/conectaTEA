@@ -7,6 +7,7 @@ export interface Student {
   schoolYear: number;
   gradeLevel: string;
   className: string;
+  cpf: string;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -20,4 +21,5 @@ export interface StudentRequest {
   schoolYear: number;
   gradeLevel: string;
   className: string;
+  cpf: string;
 }

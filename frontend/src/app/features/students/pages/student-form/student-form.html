@@ -50,6 +50,34 @@
       </div>
 
       <div class="form-field">
+        <label for="cpf">CPF *</label>
+
+        <input
+          id="cpf"
+          type="text"
+          formControlName="cpf"
+          inputmode="numeric"
+          maxlength="14"
+          placeholder="000.000.000-00"
+          required
+          [attr.aria-invalid]="
+      hasError('cpf', 'required') || hasError('cpf', 'cpf')
+    "
+          aria-describedby="cpf-error"
+        >
+
+        @if (hasError('cpf', 'required')) {
+          <small id="cpf-error">
+            O CPF é obrigatório.
+          </small>
+        } @else if (hasError('cpf', 'cpf')) {
+          <small id="cpf-error">
+            Informe um CPF válido.
+          </small>
+        }
+      </div>
+
+      <div class="form-field">
         <label for="preferredName">Nome preferido</label>
 
         <input

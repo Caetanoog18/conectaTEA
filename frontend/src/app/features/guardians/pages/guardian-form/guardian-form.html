@@ -51,21 +51,23 @@
         </div>
 
         <div class="form-field">
-          <label for="cpf">CPF</label>
+          <label for="cpf">CPF *</label>
 
           <input
             id="cpf"
+            type="text"
             formControlName="cpf"
             inputmode="numeric"
             maxlength="14"
-            placeholder="Opcional"
+            placeholder="000.000.000-00"
+            required
             [attr.aria-invalid]="hasError('cpf')"
             aria-describedby="cpf-error"
           >
 
           @if (hasError('cpf')) {
             <small id="cpf-error">
-              Use 11 dígitos ou o formato 000.000.000-00.
+              O CPF é obrigatório e deve ser válido.
             </small>
           }
         </div>

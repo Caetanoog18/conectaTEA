@@ -13,7 +13,7 @@ describe('GuardianForm', () => {
     id: 'guardian-1',
     userId: 'user-1',
     fullName: 'Maria da Silva',
-    cpf: null,
+    cpf: '52998224725',
     email: null,
     phone: '47999999999',
     active: true,
@@ -78,7 +78,7 @@ describe('GuardianForm', () => {
 
     component.form.setValue({
       fullName: ' Maria da Silva ',
-      cpf: '',
+      cpf: '529.982.247-25',
       email: '',
       phone: '47999999999'
     });
@@ -87,7 +87,7 @@ describe('GuardianForm', () => {
 
     expect(service.create).toHaveBeenCalledWith({
       fullName: 'Maria da Silva',
-      cpf: null,
+      cpf: '52998224725',
       email: null,
       phone: '47999999999',
       userId: null
@@ -100,9 +100,19 @@ describe('GuardianForm', () => {
     await setup(guardian.id);
 
     service.update.mockReturnValue(throwError(() => ({status: 409})));
+
+    expect(component.form.controls.cpf.value).toBe('52998224725');
+    expect(component.form.valid).toBe(true);
+
     component.save();
 
-    expect(service.update).toHaveBeenCalledWith(guardian.id, expect.objectContaining({userId: 'user-1'}));
+    expect(service.update).toHaveBeenCalledWith(
+      guardian.id,
+      expect.objectContaining({
+        cpf: '52998224725',
+        userId: 'user-1'
+      })
+    );
   });
 
   it('should prevent saving after loading fails', async () => {
@@ -113,5 +123,20 @@ describe('GuardianForm', () => {
 
     expect(component.loadFailed()).toBe(true);
     expect(service.update).not.toHaveBeenCalled();
+  });
+
+  it('should require a valid CPF', async () => {
+    await setup();
+
+    const cpf = component.form.controls.cpf;
+
+    cpf.setValue('');
+    expect(cpf.hasError('required')).toBe(true);
+
+    cpf.setValue('11111111111');
+    expect(cpf.hasError('cpf')).toBe(true);
+
+    cpf.setValue('529.982.247-25');
+    expect(cpf.valid).toBe(true);
   });
 });

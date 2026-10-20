@@ -55,4 +55,17 @@ describe('StudentForm', () => {
 
     expect(component.form.invalid).toBeTruthy();
   });
+
+  it('should require a valid CPF', () => {
+    const cpf = component.form.controls.cpf;
+
+    cpf.setValue('');
+    expect(cpf.hasError('required')).toBe(true);
+
+    cpf.setValue('11111111111');
+    expect(cpf.hasError('cpf')).toBe(true);
+
+    cpf.setValue('529.982.247-25');
+    expect(cpf.valid).toBe(true);
+  });
 });

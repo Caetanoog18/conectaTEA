@@ -12,6 +12,7 @@ import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {finalize} from 'rxjs';
 import {GuardianService} from '../../data-access/guardian.service';
 import {GuardianRequest} from '../../data-access/guardian.models';
+import {cpfValidator, normalizeCpf} from '../../../../shared/validators/cpf.validator';
 
 @Component({
   selector: 'app-guardian-form',
@@ -46,7 +47,7 @@ export class GuardianForm {
         Validators.maxLength(120)
       ]
     ],
-    cpf: ['', Validators.pattern(/^(?:\d{11}|\d{3}\.\d{3}\.\d{3}-\d{2})$/)],
+    cpf: ['', [Validators.required, cpfValidator]],
     email: ['', [Validators.email, Validators.maxLength(254)]],
     phone: [
       '',
@@ -78,7 +79,7 @@ export class GuardianForm {
 
     const request: GuardianRequest = {
       fullName: value.fullName.trim(),
-      cpf: value.cpf.trim() || null,
+      cpf: normalizeCpf(value.cpf),
       email: value.email.trim() || null,
       phone: value.phone.trim(),
       userId: this.associatedUserId

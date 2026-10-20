@@ -5,6 +5,7 @@ import {HttpErrorResponse} from '@angular/common/http';
 import {finalize} from 'rxjs';
 import {StudentService} from '../../data-access/student.service';
 import {StudentRequest} from '../../data-access/student.models';
+import {cpfValidator, normalizeCpf} from '../../../../shared/validators/cpf.validator';
 
 @Component({
   selector: 'app-student-form',
@@ -79,7 +80,8 @@ export class StudentForm {
         Validators.required,
         Validators.maxLength(50)
       ]
-    ]
+    ],
+    cpf: ['', [Validators.required, cpfValidator]],
   });
 
   constructor() {
@@ -89,6 +91,9 @@ export class StudentForm {
   }
 
   save(): void {
+    if (this.loading() || this.saving()) {
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -103,7 +108,8 @@ export class StudentForm {
       enrollmentNumber: value.enrollmentNumber.trim(),
       schoolYear: value.schoolYear,
       gradeLevel: value.gradeLevel.trim(),
-      className: value.className.trim()
+      className: value.className.trim(),
+      cpf: normalizeCpf(value.cpf),
     };
 
     this.saving.set(true);
@@ -151,7 +157,8 @@ export class StudentForm {
             student.enrollmentNumber,
             schoolYear: student.schoolYear,
             gradeLevel: student.gradeLevel,
-            className: student.className
+            className: student.className,
+            cpf: student.cpf,
           });
         },
         error: (error: HttpErrorResponse) => {
@@ -162,9 +169,7 @@ export class StudentForm {
       });
   }
 
-  private resolveErrorMessage(
-    error: HttpErrorResponse
-  ): string {
+  private resolveErrorMessage(error: HttpErrorResponse): string {
     if (error.status === 0) {
       return 'Não foi possível conectar ao servidor.';
     }
@@ -182,7 +187,13 @@ export class StudentForm {
         'Verifique os dados informados.';
     }
 
+    if (error.status === 409) {
+      return 'O CPF ou a matrícula já está sendo utilizado em outro cadastro.';
+    }
+
     return error.error?.detail ??
       'Não foi possível salvar o estudante.';
+
+
   }
 }

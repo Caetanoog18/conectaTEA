@@ -23,6 +23,7 @@ describe('StudentDetail', () => {
     schoolYear: 2026,
     gradeLevel: '5º ano',
     className: 'Turma B',
+    cpf: '52998224725',
     active: true,
     createdAt: '2026-10-20T12:00:00Z',
     updatedAt: '2026-10-20T12:00:00Z'

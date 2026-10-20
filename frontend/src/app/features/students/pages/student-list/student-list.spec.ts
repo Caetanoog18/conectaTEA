@@ -68,6 +68,7 @@ describe('StudentList', () => {
       schoolYear: 2026,
       gradeLevel: '4º ano',
       className: 'Turma B',
+      cpf: '52998224725',
       active: true,
       createdAt: '2026-10-07T00:00:00Z',
       updatedAt: '2026-10-07T00:00:00Z'
@@ -103,6 +104,7 @@ describe('StudentList', () => {
       schoolYear: 2026,
       gradeLevel: '4º ano',
       className: 'Turma B',
+      cpf: '52998224725',
       active: true,
       createdAt: '2026-10-07T00:00:00Z',
       updatedAt: '2026-10-07T00:00:00Z'

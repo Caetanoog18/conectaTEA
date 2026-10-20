@@ -28,7 +28,7 @@ describe('GuardianList', () => {
     id: 'guardian-1',
     userId: null,
     fullName: 'Maria da Silva',
-    cpf: null,
+    cpf: '52998224725',
     email: null,
     phone: '47999999999',
     active: true,

@@ -1,0 +1,83 @@
+<section class="care-team" aria-labelledby="care-team-title">
+  <header class="section-header">
+    <h2 id="care-team-title">
+      Equipe multiprofissional
+    </h2>
+
+    <p>
+      Profissionais vinculados ao estudante e histórico de participação.
+    </p>
+  </header>
+
+  @if (loading()) {
+    <p role="status">Carregando equipe...</p>
+  } @else if (errorMessage()) {
+    <div class="error-message" role="alert">
+      <p>{{ errorMessage() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="load()"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (links().length === 0) {
+    <p>Nenhum profissional vinculado a este estudante.</p>
+  } @else {
+    <div class="table-container">
+      <table>
+        <thead>
+        <tr>
+          <th scope="col">Profissional</th>
+          <th scope="col">Perfil</th>
+          <th scope="col">Início</th>
+          <th scope="col">Encerramento</th>
+          <th scope="col">Status do vínculo</th>
+          <th scope="col">Motivo do encerramento</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (link of links(); track link.id) {
+            <tr>
+              <td>
+                <strong>{{ link.professionalName }}</strong>
+              </td>
+
+              <td>
+                {{ roleLabel(link.professionalRole) }}
+              </td>
+
+              <td>
+                {{ link.startedOn | date:'dd/MM/yyyy':'UTC' }}
+              </td>
+
+              <td>
+                @if (link.endedOn) {
+                  {{ link.endedOn | date:'dd/MM/yyyy':'UTC' }}
+                } @else {
+                  —
+                }
+              </td>
+
+              <td>
+                <span
+                  class="status"
+                  [class.ended]="!link.active"
+                >
+                  {{ link.active ? 'Ativo' : 'Encerrado' }}
+                </span>
+              </td>
+
+              <td class="reason">
+                {{ link.endReason || '—' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

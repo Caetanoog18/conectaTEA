@@ -8,10 +8,11 @@ import {Student} from '../../data-access/student.models';
 import {StudentService} from '../../data-access/student.service';
 import {GUARDIAN_RELATIONSHIP_LABELS, GuardianRelationship, StudentGuardian} from '../../data-access/student-guardian.models';
 import {StudentGuardianService} from '../../data-access/student-guardian.service';
+import {StudentCareTeam} from '../../../careteam/components/student-care-team/student-care-team';
 
 @Component({
   selector: 'app-student-detail',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, StudentCareTeam],
   templateUrl: './student-detail.html',
   styleUrl: './student-detail.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

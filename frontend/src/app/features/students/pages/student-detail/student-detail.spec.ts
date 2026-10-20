@@ -8,6 +8,7 @@ import {StudentService} from '../../data-access/student.service';
 import {StudentGuardianService} from '../../data-access/student-guardian.service';
 import {Student} from '../../data-access/student.models';
 import {StudentGuardian} from '../../data-access/student-guardian.models';
+import {CareTeamService} from '../../../careteam/data-access/care-team.service';
 
 describe('StudentDetail', () => {
   let component: StudentDetail;
@@ -48,11 +49,16 @@ describe('StudentDetail', () => {
     findByStudent: vi.fn()
   };
 
+  const careTeamServiceMock = {
+    findByStudent: vi.fn()
+  };
+
   beforeEach(async () => {
     vi.resetAllMocks();
 
     studentServiceMock.findById.mockReturnValue(of(student));
     linkServiceMock.findByStudent.mockReturnValue(of([link]));
+    careTeamServiceMock.findByStudent.mockReturnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [StudentDetail],
@@ -73,6 +79,10 @@ describe('StudentDetail', () => {
         {
           provide: StudentGuardianService,
           useValue: linkServiceMock
+        },
+        {
+          provide: CareTeamService,
+          useValue: careTeamServiceMock
         }
       ]
     }).compileComponents();
@@ -86,6 +96,7 @@ describe('StudentDetail', () => {
 
     expect(studentServiceMock.findById).toHaveBeenCalledWith(student.id);
     expect(linkServiceMock.findByStudent).toHaveBeenCalledWith(student.id);
+    expect(careTeamServiceMock.findByStudent).toHaveBeenCalledWith(student.id);
     expect(component.student()).toEqual(student);
     expect(component.guardians()).toEqual([link]);
 
@@ -94,12 +105,11 @@ describe('StudentDetail', () => {
     expect(element.textContent).toContain(student.fullName);
     expect(element.textContent).toContain(link.guardianName);
     expect(element.textContent).toContain('Mãe');
+    expect(element.textContent).toContain('Equipe multiprofissional');
   });
 
   it('should preserve student details when guardian loading fails', () => {
-    linkServiceMock.findByStudent.mockReturnValue(
-      throwError(() => new HttpErrorResponse({status: 500}))
-    );
+    linkServiceMock.findByStudent.mockReturnValue(throwError(() => new HttpErrorResponse({status: 500})));
 
     fixture.detectChanges();
 
@@ -110,19 +120,17 @@ describe('StudentDetail', () => {
 
     expect(element.textContent).toContain(student.fullName);
     expect(element.textContent).toContain('Não foi possível carregar os responsáveis vinculados.');
-
     expect(element.textContent).not.toContain('Nenhum responsável vinculado');
   });
 
   it('should display a message when the student does not exist', () => {
-    studentServiceMock.findById.mockReturnValue(
-      throwError(() => new HttpErrorResponse({status: 404}))
-    );
+    studentServiceMock.findById.mockReturnValue(throwError(() => new HttpErrorResponse({status: 404})));
 
     fixture.detectChanges();
 
     expect(component.student()).toBeNull();
     expect(component.loading()).toBe(false);
     expect(component.errorMessage()).toBe('Estudante não encontrado.');
+    expect(careTeamServiceMock.findByStudent).not.toHaveBeenCalled();
   });
 });

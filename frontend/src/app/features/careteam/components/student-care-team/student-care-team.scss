@@ -1,0 +1,92 @@
+.care-team {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #dbe5e2;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #294b45;
+}
+
+.section-header {
+  margin-bottom: 1.5rem;
+
+  h2 {
+    margin: 0 0 0.75rem;
+    color: #173f39;
+    font-size: 1.25rem;
+  }
+
+  p {
+    margin: 0;
+    color: #637773;
+  }
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 850px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 1rem;
+  border-bottom: 1px solid #dbe5e2;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #f5f8f7;
+  font-size: 0.875rem;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.status {
+  display: inline-flex;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: #dcefeb;
+  color: #176b5d;
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  &.ended {
+    background: #f1f2f2;
+    color: #687572;
+  }
+}
+
+.reason {
+  min-width: 180px;
+  max-width: 300px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.error-message {
+  color: #9f231b;
+}
+
+.secondary-button {
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #b9cbc6;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #294b45;
+  font: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid #176b5d;
+    outline-offset: 3px;
+  }
+}

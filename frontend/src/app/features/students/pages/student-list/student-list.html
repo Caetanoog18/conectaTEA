@@ -3,6 +3,7 @@
     <div>
       <p class="eyebrow">Cadastros</p>
       <h1>Estudantes</h1>
+
       <p>
         Consulte os estudantes cadastrados na instituição.
       </p>
@@ -42,17 +43,11 @@
   }
 
   @if (loading()) {
-    <div
-      class="message"
-      role="status"
-    >
+    <div class="message" role="status">
       Carregando estudantes...
     </div>
   } @else if (errorMessage()) {
-    <div
-      class="message error"
-      role="alert"
-    >
+    <div class="message error" role="alert">
       <p>{{ errorMessage() }}</p>
 
       <button
@@ -78,13 +73,13 @@
       <table>
         <thead>
         <tr>
-          <th>Nome</th>
-          <th>Matrícula</th>
-          <th>Ano</th>
-          <th>Turma</th>
-          <th>Nascimento</th>
-          <th>Status</th>
-          <th>Ações</th>
+          <th scope="col">Nome</th>
+          <th scope="col">Matrícula</th>
+          <th scope="col">Ano</th>
+          <th scope="col">Turma</th>
+          <th scope="col">Nascimento</th>
+          <th scope="col">Status</th>
+          <th scope="col">Ações</th>
         </tr>
         </thead>
 
@@ -92,36 +87,26 @@
           @for (student of students(); track student.id) {
             <tr>
               <td>
-                <strong>
-                  {{ student.fullName }}
-                </strong>
+                <strong>{{ student.fullName }}</strong>
 
                 @if (student.preferredName) {
                   <small>
-                    Nome preferido:
-                    {{ student.preferredName }}
+                    Nome preferido: {{ student.preferredName }}
                   </small>
                 }
               </td>
 
-              <td>
-                {{ student.enrollmentNumber }}
-              </td>
+              <td>{{ student.enrollmentNumber }}</td>
 
               <td>
                 {{ student.schoolYear }} —
                 {{ student.gradeLevel }}
               </td>
 
-              <td>
-                {{ student.className }}
-              </td>
+              <td>{{ student.className }}</td>
 
               <td>
-                {{
-                  student.birthDate
-                    | date:'dd/MM/yyyy':'UTC'
-                }}
+                {{ student.birthDate | date:'dd/MM/yyyy':'UTC' }}
               </td>
 
               <td>
@@ -137,14 +122,19 @@
                 <div class="row-actions">
                   <a
                     class="edit-link"
-                    [routerLink]="[
-                      '/students',
-                      student.id,
-                      'edit'
-                    ]"
+                    [routerLink]="['/students', student.id]"
                     [attr.aria-label]="
-                      'Editar estudante ' +
-                      student.fullName
+                      'Ver perfil de ' + student.fullName
+                    "
+                  >
+                    Ver perfil
+                  </a>
+
+                  <a
+                    class="edit-link"
+                    [routerLink]="['/students', student.id, 'edit']"
+                    [attr.aria-label]="
+                      'Editar estudante ' + student.fullName
                     "
                   >
                     Editar
@@ -153,25 +143,15 @@
                   <button
                     type="button"
                     class="status-button"
-                    [class.activate-button]="
-                      !student.active
-                    "
-                    [class.deactivate-button]="
-                      student.active
-                    "
-                    [disabled]="
-                      updatingStudentId() !== null
-                    "
+                    [class.activate-button]="!student.active"
+                    [class.deactivate-button]="student.active"
+                    [disabled]="updatingStudentId() !== null"
                     (click)="changeStatus(student)"
                   >
                     @if (updatingStudentId() === student.id) {
                       Salvando...
                     } @else {
-                      {{
-                        student.active
-                          ? 'Desativar'
-                          : 'Ativar'
-                      }}
+                      {{ student.active ? 'Desativar' : 'Ativar' }}
                     }
                   </button>
                 </div>
@@ -185,7 +165,9 @@
     <footer class="pagination">
       <button
         type="button"
-        [disabled]="currentPage() === 0"
+        [disabled]="
+          currentPage() === 0 || updatingStudentId() !== null
+        "
         (click)="previousPage()"
       >
         Anterior
@@ -200,6 +182,7 @@
         type="button"
         [disabled]="
           currentPage() + 1 >= totalPages()
+          || updatingStudentId() !== null
         "
         (click)="nextPage()"
       >

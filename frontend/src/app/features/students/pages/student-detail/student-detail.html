@@ -1,0 +1,142 @@
+<section class="student-detail-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Cadastros</p>
+      <h1>Perfil do estudante</h1>
+    </div>
+
+    <a routerLink="/students" class="secondary-button">
+      Voltar para estudantes
+    </a>
+  </header>
+
+  @if (loading()) {
+    <div class="message" role="status">
+      Carregando perfil do estudante...
+    </div>
+  } @else if (errorMessage()) {
+    <div class="message error" role="alert">
+      {{ errorMessage() }}
+    </div>
+  } @else if (student(); as currentStudent) {
+    <section class="card" aria-labelledby="student-name">
+      <div class="card-header">
+        <div>
+          <h2 id="student-name">
+            {{ currentStudent.fullName }}
+          </h2>
+
+          @if (currentStudent.preferredName) {
+            <p>
+              Nome preferido: {{ currentStudent.preferredName }}
+            </p>
+          }
+        </div>
+
+        <span
+          class="status"
+          [class.inactive]="!currentStudent.active"
+        >
+          {{ currentStudent.active ? 'Ativo' : 'Inativo' }}
+        </span>
+      </div>
+
+      <dl class="student-data">
+        <div>
+          <dt>Matrícula</dt>
+          <dd>{{ currentStudent.enrollmentNumber }}</dd>
+        </div>
+
+        <div>
+          <dt>Nascimento</dt>
+          <dd>
+            {{ currentStudent.birthDate | date:'dd/MM/yyyy':'UTC' }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>Ano letivo</dt>
+          <dd>{{ currentStudent.schoolYear }}</dd>
+        </div>
+
+        <div>
+          <dt>Ano/Série</dt>
+          <dd>{{ currentStudent.gradeLevel }}</dd>
+        </div>
+
+        <div>
+          <dt>Turma</dt>
+          <dd>{{ currentStudent.className }}</dd>
+        </div>
+      </dl>
+
+      <a
+        class="secondary-button"
+        [routerLink]="['/students', currentStudent.id, 'edit']"
+      >
+        Editar cadastro
+      </a>
+    </section>
+
+    <section class="card" aria-labelledby="guardians-title">
+      <h2 id="guardians-title">Responsáveis vinculados</h2>
+
+      @if (guardiansErrorMessage()) {
+        <p class="error-text" role="alert">
+          {{ guardiansErrorMessage() }}
+        </p>
+      } @else if (guardians().length === 0) {
+        <p>Nenhum responsável vinculado a este estudante.</p>
+      } @else {
+        <div class="table-container">
+          <table>
+            <thead>
+            <tr>
+              <th scope="col">Nome</th>
+              <th scope="col">Parentesco/Vínculo</th>
+              <th scope="col">Responsável legal</th>
+              <th scope="col">Contato principal</th>
+              <th scope="col">Ações</th>
+            </tr>
+            </thead>
+
+            <tbody>
+              @for (guardian of guardians(); track guardian.id) {
+                <tr>
+                  <td>{{ guardian.guardianName }}</td>
+
+                  <td>
+                    {{ relationshipLabel(guardian.relationship) }}
+                  </td>
+
+                  <td>
+                    {{ guardian.legalGuardian ? 'Sim' : 'Não' }}
+                  </td>
+
+                  <td>
+                    {{ guardian.primaryContact ? 'Sim' : 'Não' }}
+                  </td>
+
+                  <td>
+                    <a
+                      [routerLink]="[
+                        '/guardians',
+                        guardian.guardianId,
+                        'edit'
+                      ]"
+                      [attr.aria-label]="
+                        'Editar cadastro de ' + guardian.guardianName
+                      "
+                    >
+                      Editar cadastro
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</section>

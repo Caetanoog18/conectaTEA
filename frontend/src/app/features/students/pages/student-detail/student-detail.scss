@@ -1,0 +1,147 @@
+.student-detail-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  color: #294b45;
+}
+
+.page-header,
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+h1,
+h2 {
+  color: #173f39;
+}
+
+h1 {
+  margin: 0.35rem 0 0;
+  font-size: 2rem;
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+}
+
+p {
+  color: #637773;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #176b5d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.card,
+.message {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #dbe5e2;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.student-data {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin: 0 0 1.5rem;
+
+  dt {
+    margin-bottom: 0.35rem;
+    color: #637773;
+    font-size: 0.875rem;
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+  }
+}
+
+.status {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: #dcefeb;
+  color: #176b5d;
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  &.inactive {
+    background: #f1f2f2;
+    color: #687572;
+  }
+}
+
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.25rem 1rem;
+  border: 1px solid #b9cbc6;
+  border-radius: 0.5rem;
+  text-decoration: none;
+}
+
+a {
+  color: #176b5d;
+
+  &:focus-visible {
+    outline: 2px solid #176b5d;
+    outline-offset: 3px;
+  }
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 1rem;
+  border-bottom: 1px solid #dbe5e2;
+  text-align: left;
+}
+
+th {
+  background: #f5f8f7;
+  font-size: 0.875rem;
+}
+
+.error {
+  border-color: #f5b7b1;
+  background: #fff1f0;
+  color: #9f231b;
+}
+
+.error-text {
+  color: #9f231b;
+}
+
+@media (max-width: 700px) {
+  .page-header,
+  .card-header {
+    flex-direction: column;
+  }
+
+  .student-data {
+    grid-template-columns: 1fr;
+  }
+}

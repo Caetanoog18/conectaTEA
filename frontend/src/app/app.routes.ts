@@ -29,6 +29,12 @@ export const routes: Routes = [
           import('./features/students/pages/student-form/student-form').then(component => component.StudentForm)
       },
       {
+        path: 'students/:studentId',
+        loadComponent: () =>
+          import('./features/students/pages/student-detail/student-detail')
+            .then(component => component.StudentDetail)
+      },
+      {
         path: 'students',
         loadComponent: () =>
           import('./features/students/pages/student-list/student-list').then(component => component.StudentList)

@@ -34,3 +34,14 @@ export const GUARDIAN_RELATIONSHIP_LABELS:
   LEGAL_GUARDIAN: 'Responsável legal',
   OTHER: 'Outro'
 };
+
+export interface UpdateStudentGuardianRequest {
+  relationship: GuardianRelationship;
+  legalGuardian: boolean;
+  primaryContact: boolean;
+}
+
+export interface CreateStudentGuardianRequest
+  extends UpdateStudentGuardianRequest {
+  guardianId: string;
+}

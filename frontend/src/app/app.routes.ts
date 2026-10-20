@@ -29,6 +29,20 @@ export const routes: Routes = [
           import('./features/students/pages/student-form/student-form').then(component => component.StudentForm)
       },
       {
+        path: 'students/:studentId/guardians/new',
+        loadComponent: () =>
+          import(
+            './features/students/pages/student-guardian-form/student-guardian-form'
+            ).then(component => component.StudentGuardianForm)
+      },
+      {
+        path: 'students/:studentId/guardians/:guardianId/edit',
+        loadComponent: () =>
+          import(
+            './features/students/pages/student-guardian-form/student-guardian-form'
+            ).then(component => component.StudentGuardianForm)
+      },
+      {
         path: 'students/:studentId',
         loadComponent: () =>
           import('./features/students/pages/student-detail/student-detail')

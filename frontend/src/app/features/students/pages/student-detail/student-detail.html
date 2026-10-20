@@ -79,7 +79,25 @@
     </section>
 
     <section class="card" aria-labelledby="guardians-title">
-      <h2 id="guardians-title">Responsáveis vinculados</h2>
+      <div class="card-header">
+        <h2 id="guardians-title">
+          Responsáveis vinculados
+        </h2>
+
+        @if (currentStudent.active) {
+          <a
+            class="secondary-button"
+            [routerLink]="[
+              '/students',
+              currentStudent.id,
+              'guardians',
+              'new'
+            ]"
+          >
+            Vincular responsável
+          </a>
+        }
+      </div>
 
       @if (guardiansErrorMessage()) {
         <p class="error-text" role="alert">
@@ -118,18 +136,36 @@
                   </td>
 
                   <td>
-                    <a
-                      [routerLink]="[
-                        '/guardians',
-                        guardian.guardianId,
-                        'edit'
-                      ]"
-                      [attr.aria-label]="
-                        'Editar cadastro de ' + guardian.guardianName
-                      "
-                    >
-                      Editar cadastro
-                    </a>
+                    <div class="row-actions">
+                      <a
+                        [routerLink]="[
+                          '/guardians',
+                          guardian.guardianId,
+                          'edit'
+                        ]"
+                        [attr.aria-label]="
+                          'Editar cadastro de ' + guardian.guardianName
+                        "
+                      >
+                        Editar cadastro
+                      </a>
+
+                      <a
+                        class="secondary-button"
+                        [routerLink]="[
+                          '/students',
+                          currentStudent.id,
+                          'guardians',
+                          guardian.guardianId,
+                          'edit'
+                        ]"
+                        [attr.aria-label]="
+                          'Editar vínculo de ' + guardian.guardianName
+                        "
+                      >
+                        Editar vínculo
+                      </a>
+                    </div>
                   </td>
                 </tr>
               }

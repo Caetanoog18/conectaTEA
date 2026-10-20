@@ -39,6 +39,18 @@ export const routes: Routes = [
           import('./features/guardians/pages/guardian-list/guardian-list').then(component => component.GuardianList)
       },
       {
+        path: 'guardians/new',
+        loadComponent: () =>
+          import('./features/guardians/pages/guardian-form/guardian-form')
+            .then(component => component.GuardianForm)
+      },
+      {
+        path: 'guardians/:guardianId/edit',
+        loadComponent: () =>
+          import('./features/guardians/pages/guardian-form/guardian-form')
+            .then(component => component.GuardianForm)
+      },
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'dashboard'

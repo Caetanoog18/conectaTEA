@@ -2,7 +2,6 @@
   <header class="page-header">
     <div>
       <p class="eyebrow">Cadastros</p>
-
       <h1>Responsáveis</h1>
 
       <p>
@@ -12,26 +11,20 @@
 
     <span class="total">
       {{ totalElements() }}
-      {{
-        totalElements() === 1
-          ? 'responsável'
-          : 'responsáveis'
-      }}
+      {{ totalElements() === 1 ? 'responsável' : 'responsáveis' }}
     </span>
+
+    <a routerLink="/guardians/new" class="primary-button">
+      Novo responsável
+    </a>
   </header>
 
   @if (loading()) {
-    <div
-      class="message"
-      role="status"
-    >
+    <div class="message" role="status">
       Carregando responsáveis...
     </div>
   } @else if (errorMessage()) {
-    <div
-      class="message error"
-      role="alert"
-    >
+    <div class="message error" role="alert">
       <p>{{ errorMessage() }}</p>
 
       <button
@@ -43,29 +36,31 @@
     </div>
   } @else if (guardians().length === 0) {
     <div class="message">
-      Nenhum responsável cadastrado.
+      <p>Nenhum responsável cadastrado.</p>
+
+      <a routerLink="/guardians/new" class="primary-button">
+        Cadastrar primeiro responsável
+      </a>
     </div>
   } @else {
     <div class="table-container">
       <table>
         <thead>
         <tr>
-          <th>Nome</th>
-          <th>CPF</th>
-          <th>Contato</th>
-          <th>Acesso ao sistema</th>
-          <th>Status</th>
+          <th scope="col">Nome</th>
+          <th scope="col">CPF</th>
+          <th scope="col">Contato</th>
+          <th scope="col">Acesso ao sistema</th>
+          <th scope="col">Status</th>
+          <th scope="col">Ações</th>
         </tr>
         </thead>
 
         <tbody>
-          @for (guardian of guardians();
-            track guardian.id) {
+          @for (guardian of guardians(); track guardian.id) {
             <tr>
               <td>
-                <strong>
-                  {{ guardian.fullName }}
-                </strong>
+                <strong>{{ guardian.fullName }}</strong>
               </td>
 
               <td>
@@ -73,14 +68,10 @@
               </td>
 
               <td>
-                <span>
-                  {{ guardian.phone }}
-                </span>
+                <span>{{ guardian.phone }}</span>
 
                 @if (guardian.email) {
-                  <small>
-                    {{ guardian.email }}
-                  </small>
+                  <small>{{ guardian.email }}</small>
                 } @else {
                   <small>E-mail não informado</small>
                 }
@@ -91,11 +82,7 @@
                   class="access-status"
                   [class.linked]="guardian.userId"
                 >
-                  {{
-                    guardian.userId
-                      ? 'Vinculado'
-                      : 'Sem acesso'
-                  }}
+                  {{ guardian.userId ? 'Vinculado' : 'Sem acesso' }}
                 </span>
               </td>
 
@@ -104,12 +91,24 @@
                   class="status"
                   [class.inactive]="!guardian.active"
                 >
-                  {{
-                    guardian.active
-                      ? 'Ativo'
-                      : 'Inativo'
-                  }}
+                  {{ guardian.active ? 'Ativo' : 'Inativo' }}
                 </span>
+              </td>
+
+              <td>
+                <a
+                  class="edit-link"
+                  [routerLink]="[
+                    '/guardians',
+                    guardian.id,
+                    'edit'
+                  ]"
+                  [attr.aria-label]="
+                    'Editar responsável ' + guardian.fullName
+                  "
+                >
+                  Editar
+                </a>
               </td>
             </tr>
           }
@@ -133,9 +132,7 @@
 
       <button
         type="button"
-        [disabled]="
-          currentPage() + 1 >= totalPages()
-        "
+        [disabled]="currentPage() + 1 >= totalPages()"
         (click)="nextPage()"
       >
         Próxima

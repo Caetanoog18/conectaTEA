@@ -3,10 +3,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { Guardian } from '../../data-access/guardian.models';
 import { GuardianService } from '../../data-access/guardian.service';
+import {RouterLink} from '@angular/router';
 
 @Component({
   selector: 'app-guardian-list',
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './guardian-list.html',
   styleUrl: './guardian-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

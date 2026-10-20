@@ -1,0 +1,131 @@
+<section class="guardian-form-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Cadastros</p>
+
+      <h1>
+        {{ editMode ? 'Editar responsável' : 'Novo responsável' }}
+      </h1>
+
+      <p>Informe os dados de contato do responsável.</p>
+    </div>
+
+    <a routerLink="/guardians" class="secondary-button">
+      Voltar
+    </a>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="error-message" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <p role="status">Carregando responsável...</p>
+  } @else if (!loadFailed()) {
+    <form
+      class="guardian-form"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+    >
+      <fieldset [disabled]="saving()">
+        <div class="form-field full-width">
+          <label for="fullName">Nome completo *</label>
+
+          <input
+            id="fullName"
+            formControlName="fullName"
+            autocomplete="name"
+            maxlength="120"
+            required
+            [attr.aria-invalid]="hasError('fullName')"
+            aria-describedby="fullName-error"
+          >
+
+          @if (hasError('fullName')) {
+            <small id="fullName-error">
+              Informe um nome com até 120 caracteres.
+            </small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="cpf">CPF</label>
+
+          <input
+            id="cpf"
+            formControlName="cpf"
+            inputmode="numeric"
+            maxlength="14"
+            placeholder="Opcional"
+            [attr.aria-invalid]="hasError('cpf')"
+            aria-describedby="cpf-error"
+          >
+
+          @if (hasError('cpf')) {
+            <small id="cpf-error">
+              Use 11 dígitos ou o formato 000.000.000-00.
+            </small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="phone">Telefone *</label>
+
+          <input
+            id="phone"
+            type="tel"
+            formControlName="phone"
+            autocomplete="tel"
+            maxlength="20"
+            required
+            [attr.aria-invalid]="hasError('phone')"
+            aria-describedby="phone-error"
+          >
+
+          @if (hasError('phone')) {
+            <small id="phone-error">
+              Informe um telefone com até 20 caracteres.
+            </small>
+          }
+        </div>
+
+        <div class="form-field full-width">
+          <label for="email">E-mail</label>
+
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            maxlength="254"
+            placeholder="Opcional"
+            [attr.aria-invalid]="hasError('email')"
+            aria-describedby="email-error"
+          >
+
+          @if (hasError('email')) {
+            <small id="email-error">
+              Informe um e-mail válido.
+            </small>
+          }
+        </div>
+
+        <p class="hint full-width">
+          Este cadastro não cria uma conta de acesso ao sistema.
+        </p>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="saving()"
+          >
+            {{ saving() ? 'Salvando...' : 'Salvar responsável' }}
+          </button>
+        </div>
+      </fieldset>
+    </form>
+  }
+</section>

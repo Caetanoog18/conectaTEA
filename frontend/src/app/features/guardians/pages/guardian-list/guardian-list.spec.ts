@@ -3,6 +3,7 @@ import {of} from 'rxjs';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {GuardianList} from './guardian-list';
 import {GuardianService} from '../../data-access/guardian.service';
+import {provideRouter} from '@angular/router';
 
 describe('GuardianList', () => {
   let component: GuardianList;
@@ -26,10 +27,9 @@ describe('GuardianList', () => {
     guardianServiceMock.findAll.mockReturnValue(of(emptyPage));
 
     await TestBed.configureTestingModule({
-      imports: [
-        GuardianList
-      ],
+      imports: [GuardianList],
       providers: [
+        provideRouter([]),
         {
           provide: GuardianService,
           useValue: guardianServiceMock

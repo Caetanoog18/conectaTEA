@@ -34,6 +34,11 @@ export const routes: Routes = [
           import('./features/students/pages/student-list/student-list').then(component => component.StudentList)
       },
       {
+        path: 'guardians',
+        loadComponent: () =>
+          import('./features/guardians/pages/guardian-list/guardian-list').then(component => component.GuardianList)
+      },
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'dashboard'

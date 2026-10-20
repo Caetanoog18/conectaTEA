@@ -1,0 +1,145 @@
+<section class="guardian-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Cadastros</p>
+
+      <h1>Responsáveis</h1>
+
+      <p>
+        Consulte os responsáveis cadastrados na instituição.
+      </p>
+    </div>
+
+    <span class="total">
+      {{ totalElements() }}
+      {{
+        totalElements() === 1
+          ? 'responsável'
+          : 'responsáveis'
+      }}
+    </span>
+  </header>
+
+  @if (loading()) {
+    <div
+      class="message"
+      role="status"
+    >
+      Carregando responsáveis...
+    </div>
+  } @else if (errorMessage()) {
+    <div
+      class="message error"
+      role="alert"
+    >
+      <p>{{ errorMessage() }}</p>
+
+      <button
+        type="button"
+        (click)="loadPage(currentPage())"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (guardians().length === 0) {
+    <div class="message">
+      Nenhum responsável cadastrado.
+    </div>
+  } @else {
+    <div class="table-container">
+      <table>
+        <thead>
+        <tr>
+          <th>Nome</th>
+          <th>CPF</th>
+          <th>Contato</th>
+          <th>Acesso ao sistema</th>
+          <th>Status</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (guardian of guardians();
+            track guardian.id) {
+            <tr>
+              <td>
+                <strong>
+                  {{ guardian.fullName }}
+                </strong>
+              </td>
+
+              <td>
+                {{ formatCpf(guardian.cpf) }}
+              </td>
+
+              <td>
+                <span>
+                  {{ guardian.phone }}
+                </span>
+
+                @if (guardian.email) {
+                  <small>
+                    {{ guardian.email }}
+                  </small>
+                } @else {
+                  <small>E-mail não informado</small>
+                }
+              </td>
+
+              <td>
+                <span
+                  class="access-status"
+                  [class.linked]="guardian.userId"
+                >
+                  {{
+                    guardian.userId
+                      ? 'Vinculado'
+                      : 'Sem acesso'
+                  }}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  class="status"
+                  [class.inactive]="!guardian.active"
+                >
+                  {{
+                    guardian.active
+                      ? 'Ativo'
+                      : 'Inativo'
+                  }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pagination">
+      <button
+        type="button"
+        [disabled]="currentPage() === 0"
+        (click)="previousPage()"
+      >
+        Anterior
+      </button>
+
+      <span>
+        Página {{ currentPage() + 1 }}
+        de {{ totalPages() }}
+      </span>
+
+      <button
+        type="button"
+        [disabled]="
+          currentPage() + 1 >= totalPages()
+        "
+        (click)="nextPage()"
+      >
+        Próxima
+      </button>
+    </footer>
+  }
+</section>

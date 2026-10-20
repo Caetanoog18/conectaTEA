@@ -1,0 +1,1 @@
+import{At as ip,S as Ie,l as D,o as C}from"./chunk-BBeuxGeN.js";function w(t){t||(t=D(Ie));let i=new C(e=>{if(t.destroyed){e.next();return}return t.onDestroy(e.next.bind(e))});return e=>e.pipe(ip(i))}export{w as t};

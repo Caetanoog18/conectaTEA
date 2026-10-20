@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
         "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf=",
         "app.security.login.max-attempts=3",
         "app.security.login.window=PT10M",
         "app.security.login.block-duration=PT15M"

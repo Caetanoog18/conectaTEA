@@ -15,6 +15,7 @@ import com.github.caetanoog18.conectatea.guardian.infrastructure.GuardianReposit
 import com.github.caetanoog18.conectatea.identity.domain.UserRole;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
 import com.github.caetanoog18.conectatea.shared.api.dto.PagedResponse;
+import com.github.caetanoog18.conectatea.shared.domain.Cpf;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,11 +32,7 @@ public class GuardianService {
     private final UserRepository userRepository;
     private final AuditedOperation auditedOperation;
 
-    public GuardianService(
-            GuardianRepository guardianRepository,
-            UserRepository userRepository,
-            AuditedOperation auditedOperation
-    ) {
+    public GuardianService(GuardianRepository guardianRepository, UserRepository userRepository, AuditedOperation auditedOperation) {
         this.guardianRepository = guardianRepository;
         this.userRepository = userRepository;
         this.auditedOperation = auditedOperation;
@@ -54,14 +51,14 @@ public class GuardianService {
     }
 
     private GuardianResponse createGuardian(GuardianRequest request) {
-        String normalizedCpf = normalizeDigits(request.cpf());
+        String normalizedCpf = Cpf.normalize(request.cpf());
 
         validateCpf(normalizedCpf, null);
-        validateUser(request.userId(), null);
+        validateUser(request.userId(), null, normalizedCpf);
 
         Guardian guardian = new Guardian(
                 request.fullName(),
-                request.cpf(),
+                normalizedCpf,
                 request.email(),
                 request.phone(),
                 request.userId()
@@ -72,7 +69,10 @@ public class GuardianService {
 
     public PagedResponse<GuardianResponse> findAll(int page, int size) {
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "fullName"));
-        Page<GuardianResponse> guardians = guardianRepository.findAll(pageable).map(GuardianResponse::from);
+
+        Page<GuardianResponse> guardians = guardianRepository
+                .findAll(pageable)
+                .map(GuardianResponse::from);
 
         return PagedResponse.from(guardians);
     }
@@ -95,14 +95,14 @@ public class GuardianService {
 
     private GuardianResponse updateGuardian(UUID guardianId, GuardianRequest request) {
         Guardian guardian = findGuardian(guardianId);
-        String normalizedCpf = normalizeDigits(request.cpf());
+        String normalizedCpf = Cpf.normalize(request.cpf());
 
         validateCpf(normalizedCpf, guardianId);
-        validateUser(request.userId(), guardianId);
+        validateUser(request.userId(), guardianId, normalizedCpf);
 
         guardian.update(
                 request.fullName(),
-                request.cpf(),
+                normalizedCpf,
                 request.email(),
                 request.phone(),
                 request.userId()
@@ -140,27 +140,25 @@ public class GuardianService {
     }
 
     private void validateCpf(String normalizedCpf, UUID currentGuardianId) {
-        if (normalizedCpf == null) {
-            return;
-        }
-
         boolean exists = currentGuardianId == null
                 ? guardianRepository.existsByCpf(normalizedCpf)
-                : guardianRepository.existsByCpfAndIdNot(normalizedCpf, currentGuardianId);
+                : guardianRepository.existsByCpfAndIdNot(
+                normalizedCpf,
+                currentGuardianId);
 
         if (exists) {
             throw new CpfAlreadyInUseException();
         }
     }
 
-    private void validateUser(UUID userId, UUID currentGuardianId) {
+    private void validateUser(UUID userId, UUID currentGuardianId, String normalizedCpf) {
         if (userId == null) {
             return;
         }
 
         var user = userRepository.findById(userId).orElseThrow(InvalidGuardianUserException::new);
 
-        if (user.getRole() != UserRole.LEGAL_GUARDIAN) {
+        if (user.getRole() != UserRole.LEGAL_GUARDIAN || !normalizedCpf.equals(user.getCpf())) {
             throw new InvalidGuardianUserException();
         }
 
@@ -179,13 +177,5 @@ public class GuardianService {
         } catch (DataIntegrityViolationException exception) {
             throw new GuardianDataConflictException();
         }
-    }
-
-    private static String normalizeDigits(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-
-        return value.replaceAll("\\D", "");
     }
 }

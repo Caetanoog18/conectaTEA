@@ -16,6 +16,7 @@ import com.github.caetanoog18.conectatea.identity.domain.UserRole;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -89,7 +91,8 @@ class StudentAccessIntegrationTest {
                         "Access Administrator",
                         "access-admin@conectatea.com",
                         "temporary-password-hash",
-                        UserRole.ADMINISTRATOR
+                        UserRole.ADMINISTRATOR,
+                        TestCpf.next()
                 )
         );
 
@@ -98,7 +101,8 @@ class StudentAccessIntegrationTest {
                         "Maria Professora",
                         "access-teacher@conectatea.com",
                         "temporary-password-hash",
-                        UserRole.TEACHER
+                        UserRole.TEACHER,
+                        TestCpf.next()
                 )
         );
 
@@ -329,7 +333,8 @@ class StudentAccessIntegrationTest {
                         enrollmentNumber,
                         2026,
                         "5º ano",
-                        "Turma B"
+                        "Turma B",
+                        TestCpf.next()
                 )
         );
     }

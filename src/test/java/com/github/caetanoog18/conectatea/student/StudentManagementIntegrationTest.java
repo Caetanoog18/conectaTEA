@@ -7,6 +7,7 @@ import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
 import com.github.caetanoog18.conectatea.audit.domain.AuditEvent;
 import com.github.caetanoog18.conectatea.audit.domain.AuditOutcome;
 import com.github.caetanoog18.conectatea.audit.infrastructure.AuditEventRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,7 +38,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -142,7 +144,8 @@ class StudentManagementIntegrationTest {
                   "enrollmentNumber": "mat-2026-001",
                   "schoolYear": 2026,
                   "gradeLevel": "5º ano",
-                  "className": "Turma B"
+                  "className": "Turma B",
+                  "cpf": "52998224725"
                 }
                 """;
 
@@ -246,24 +249,29 @@ class StudentManagementIntegrationTest {
                 enrollmentNumber,
                 2026,
                 "5º ano",
-                "Turma A"
+                "Turma A",
+                TestCpf.next()
         );
 
         return studentRepository.saveAndFlush(student);
     }
 
-    private static String studentRequestBody(String enrollmentNumber, String fullName) {
+    private static String studentRequestBody(
+            String enrollmentNumber,
+            String fullName
+    ) {
         return """
-                {
-                  "fullName": "%s",
-                  "preferredName": "João",
-                  "birthDate": "2015-03-12",
-                  "enrollmentNumber": "%s",
-                  "schoolYear": 2026,
-                  "gradeLevel": "5º ano",
-                  "className": "Turma A"
-                }
-                """.formatted(fullName, enrollmentNumber);
+            {
+              "fullName": "%s",
+              "preferredName": "João",
+              "birthDate": "2015-03-12",
+              "enrollmentNumber": "%s",
+              "schoolYear": 2026,
+              "gradeLevel": "5º ano",
+              "className": "Turma A",
+              "cpf": "%s"
+            }
+            """.formatted(fullName, enrollmentNumber, TestCpf.next());
     }
 
     private static RequestPostProcessor withRole(String role) {
@@ -277,5 +285,60 @@ class StudentManagementIntegrationTest {
         var events = auditEventRepository.findAllByRequestIdOrderByOccurredAtAscIdAsc(requestId);
         assertThat(events).hasSize(1);
         return events.getFirst();
+    }
+
+    @Test
+    void duplicateCpfShouldBeRejected() throws Exception {
+        Student existing = persistStudent(
+                "MAT-CPF-001",
+                "Primeiro estudante"
+        );
+
+        String requestBody = """
+            {
+              "fullName": "Segundo estudante",
+              "birthDate": "2015-03-12",
+              "enrollmentNumber": "MAT-CPF-002",
+              "schoolYear": 2026,
+              "gradeLevel": "5º ano",
+              "className": "Turma A",
+              "cpf": "%s"
+            }
+            """.formatted(existing.getCpf());
+
+        mockMvc.perform(
+                        post("/api/students")
+                                .with(withRole("ADMINISTRATOR"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestBody)
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.title").value("CPF already in use"));
+
+        assertThat(studentRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    void missingCpfShouldBeRejected() throws Exception {
+        String requestBody = """
+            {
+              "fullName": "Estudante sem CPF",
+              "birthDate": "2015-03-12",
+              "enrollmentNumber": "MAT-SEM-CPF",
+              "schoolYear": 2026,
+              "gradeLevel": "5º ano",
+              "className": "Turma A"
+            }
+            """;
+
+        mockMvc.perform(
+                        post("/api/students")
+                                .with(withRole("ADMINISTRATOR"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestBody)
+                )
+                .andExpect(status().isBadRequest());
+
+        assertThat(studentRepository.count()).isZero();
     }
 }

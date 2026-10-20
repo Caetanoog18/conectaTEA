@@ -3,6 +3,7 @@ package com.github.caetanoog18.conectatea.identity.application;
 import com.github.caetanoog18.conectatea.identity.domain.User;
 import com.github.caetanoog18.conectatea.identity.domain.UserRole;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
+import com.github.caetanoog18.conectatea.shared.domain.Cpf;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -17,6 +18,7 @@ public class InitialAdministratorInitializer implements ApplicationRunner {
     private final String administratorName;
     private final String administratorEmail;
     private final String administratorPassword;
+    private final String administratorCpf;
 
     public InitialAdministratorInitializer(
             UserRepository userRepository,
@@ -26,49 +28,55 @@ public class InitialAdministratorInitializer implements ApplicationRunner {
             @Value("${app.bootstrap.admin.email:}")
             String administratorEmail,
             @Value("${app.bootstrap.admin.password:}")
-            String administratorPassword
+            String administratorPassword,
+            @Value("${app.bootstrap.admin.cpf:}")
+            String administratorCpf
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.administratorName = administratorName;
         this.administratorEmail = administratorEmail;
         this.administratorPassword = administratorPassword;
+        this.administratorCpf = administratorCpf;
     }
 
     @Override
     @Transactional
     public void run(ApplicationArguments arguments) {
-        boolean emailMissing = administratorEmail.isBlank();
-        boolean passwordMissing = administratorPassword.isBlank();
-
-        if (emailMissing && passwordMissing) {
+        if (administratorEmail.isBlank() && administratorPassword.isBlank() && administratorCpf.isBlank()) {
             return;
         }
 
-        if (emailMissing || passwordMissing) {
-            throw new IllegalStateException(
-                    "INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD " +
-                            "must be provided together"
-            );
-        }
-
-        if (administratorPassword.length() < 12) {
-            throw new IllegalStateException(
-                    "INITIAL_ADMIN_PASSWORD must contain at least 12 characters"
-            );
+        if (administratorEmail.isBlank()) {
+            throw new IllegalStateException("INITIAL_ADMIN_EMAIL must be provided");
         }
 
         if (userRepository.existsByEmailIgnoreCase(administratorEmail)) {
             return;
         }
 
+        if (administratorPassword.length() < 12 || administratorPassword.length() > 64) {
+            throw new IllegalStateException("INITIAL_ADMIN_PASSWORD must contain between 12 and 64 characters");
+        }
+
+        if (administratorName.isBlank()) {
+            throw new IllegalStateException("INITIAL_ADMIN_NAME must not be blank");
+        }
+
+        String cpf = Cpf.normalize(administratorCpf);
+
+        if (userRepository.existsByCpf(cpf)) {
+            throw new IllegalStateException("Initial administrator CPF already in use");
+        }
+
         User administrator = new User(
-                administratorName,
+                administratorName.trim(),
                 administratorEmail,
                 passwordEncoder.encode(administratorPassword),
-                UserRole.ADMINISTRATOR
+                UserRole.ADMINISTRATOR,
+                cpf
         );
 
-        userRepository.save(administrator);
+        userRepository.saveAndFlush(administrator);
     }
 }

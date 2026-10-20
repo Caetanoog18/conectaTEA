@@ -18,6 +18,66 @@
       Novo responsável
     </a>
   </header>
+  @if (successMessage()) {
+    <div class="message success" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (selectedGuardian(); as guardian) {
+    <section
+      class="status-confirmation"
+      aria-labelledby="status-confirmation-title"
+      [attr.aria-busy]="updatingStatus()"
+    >
+      <h2 id="status-confirmation-title">
+        {{ guardian.active ? 'Desativar responsável' : 'Ativar responsável' }}
+      </h2>
+
+      <p>
+        Deseja
+        {{ guardian.active ? 'desativar' : 'ativar' }}
+        o cadastro de
+        <strong>{{ guardian.fullName }}</strong>?
+      </p>
+
+      @if (guardian.active) {
+        <p>O cadastro e seu histórico serão preservados.</p>
+      }
+
+      @if (statusErrorMessage()) {
+        <p class="confirmation-error" role="alert">
+          {{ statusErrorMessage() }}
+        </p>
+      }
+
+      <div class="confirmation-actions">
+        <button
+          type="button"
+          class="secondary-button"
+          [disabled]="updatingStatus()"
+          (click)="cancelStatusChange()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="updatingStatus()"
+          (click)="confirmStatusChange()"
+        >
+          {{
+            updatingStatus()
+              ? 'Salvando...'
+              : guardian.active
+                ? 'Confirmar desativação'
+                : 'Confirmar ativação'
+          }}
+        </button>
+      </div>
+    </section>
+  }
 
   @if (loading()) {
     <div class="message" role="status">
@@ -96,19 +156,26 @@
               </td>
 
               <td>
-                <a
-                  class="edit-link"
-                  [routerLink]="[
-                    '/guardians',
-                    guardian.id,
-                    'edit'
-                  ]"
-                  [attr.aria-label]="
-                    'Editar responsável ' + guardian.fullName
-                  "
-                >
-                  Editar
-                </a>
+                <div class="row-actions">
+                  <a
+                    class="edit-link"
+                    [routerLink]="['/guardians', guardian.id, 'edit']"
+                    [attr.aria-label]="'Editar responsável ' + guardian.fullName"
+                  >
+                    Editar
+                  </a>
+
+                  <button
+                    type="button"
+                    class="status-button"
+                    [disabled]="updatingStatus()"
+                    [attr.aria-label]=" (guardian.active ? 'Desativar responsável ' : 'Ativar responsável ')
+                    + guardian.fullName"
+                    (click)="requestStatusChange(guardian)"
+                  >
+                    {{ guardian.active ? 'Desativar' : 'Ativar' }}
+                  </button>
+                </div>
               </td>
             </tr>
           }
@@ -119,20 +186,20 @@
     <footer class="pagination">
       <button
         type="button"
-        [disabled]="currentPage() === 0"
+        [disabled]="currentPage() === 0 || updatingStatus()"
         (click)="previousPage()"
       >
         Anterior
       </button>
 
       <span>
-        Página {{ currentPage() + 1 }}
+    Página {{ currentPage() + 1 }}
         de {{ totalPages() }}
-      </span>
+  </span>
 
       <button
         type="button"
-        [disabled]="currentPage() + 1 >= totalPages()"
+        [disabled]="currentPage() + 1 >= totalPages() || updatingStatus()"
         (click)="nextPage()"
       >
         Próxima

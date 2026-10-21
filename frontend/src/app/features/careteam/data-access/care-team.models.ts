@@ -24,3 +24,15 @@ export const PROFESSIONAL_ROLE_LABELS: Record<string, string> = {
   PHYSICIAN: 'Médico',
   LEGAL_GUARDIAN: 'Responsável legal'
 };
+
+export interface ProfessionalOption {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+}
+
+export interface CreateProfessionalLinkRequest {
+  professionalId: string;
+  startedOn: string;
+}

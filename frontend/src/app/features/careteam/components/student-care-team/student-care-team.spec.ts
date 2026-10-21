@@ -5,6 +5,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {StudentCareTeam} from './student-care-team';
 import {CareTeamService} from '../../data-access/care-team.service';
 import {ProfessionalLink} from '../../data-access/care-team.models';
+import {provideRouter} from '@angular/router';
 
 describe('StudentCareTeam', () => {
   let component: StudentCareTeam;
@@ -51,9 +52,10 @@ describe('StudentCareTeam', () => {
     await TestBed.configureTestingModule({
       imports: [StudentCareTeam],
       providers: [
+        provideRouter([]),
         {
           provide: CareTeamService,
-          useValue: serviceMock
+          useValue: serviceMock,
         }
       ]
     }).compileComponents();

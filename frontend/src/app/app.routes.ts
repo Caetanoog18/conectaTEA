@@ -43,6 +43,13 @@ export const routes: Routes = [
             ).then(component => component.StudentGuardianForm)
       },
       {
+        path: 'students/:studentId/care-team/new',
+        loadComponent: () =>
+          import(
+            './features/careteam/pages/professional-link-form/professional-link-form'
+            ).then(component => component.ProfessionalLinkForm)
+      },
+      {
         path: 'students/:studentId',
         loadComponent: () =>
           import('./features/students/pages/student-detail/student-detail')

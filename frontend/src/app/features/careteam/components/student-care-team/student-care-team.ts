@@ -13,16 +13,18 @@ import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {finalize, Subscription} from 'rxjs';
 import {CareTeamService} from '../../data-access/care-team.service';
 import {PROFESSIONAL_ROLE_LABELS, ProfessionalLink} from '../../data-access/care-team.models';
+import {RouterLink} from '@angular/router';
 
 @Component({
   selector: 'app-student-care-team',
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   templateUrl: './student-care-team.html',
   styleUrl: './student-care-team.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StudentCareTeam implements OnChanges {
   @Input({required: true}) studentId = '';
+  @Input() studentActive = true;
 
   private readonly careTeamService = inject(CareTeamService);
   private readonly destroyRef = inject(DestroyRef);

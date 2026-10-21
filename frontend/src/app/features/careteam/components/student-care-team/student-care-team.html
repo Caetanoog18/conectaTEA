@@ -7,6 +7,14 @@
     <p>
       Profissionais vinculados ao estudante e histórico de participação.
     </p>
+    @if (studentActive) {
+      <a
+        class="secondary-button"
+        [routerLink]="['/students', studentId, 'care-team', 'new']"
+      >
+        Vincular profissional
+      </a>
+    }
   </header>
 
   @if (loading()) {

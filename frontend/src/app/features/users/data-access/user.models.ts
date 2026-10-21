@@ -1,11 +1,8 @@
-export type UserRole =
-  | 'ADMINISTRATOR'
-  | 'PEDAGOGICAL_COORDINATOR'
-  | 'TEACHER'
-  | 'AEE_TEACHER'
-  | 'PSYCHOLOGIST'
-  | 'PHYSICIAN'
-  | 'LEGAL_GUARDIAN';
+import {ALL_ROLES, USER_ROLE_LABELS} from '../../../core/auth/roles';
+import type {UserRole} from '../../../core/auth/roles';
+
+export {USER_ROLE_LABELS} from '../../../core/auth/roles';
+export type {UserRole} from '../../../core/auth/roles';
 
 export interface User {
   id: string;
@@ -25,18 +22,7 @@ export interface CreateUserRequest {
   cpf: string;
 }
 
-export const USER_ROLE_LABELS: Record<UserRole, string> = {
-  ADMINISTRATOR: 'Administrador',
-  PEDAGOGICAL_COORDINATOR: 'Coordenador pedagógico',
-  TEACHER: 'Professor',
-  AEE_TEACHER: 'Professor de AEE',
-  PSYCHOLOGIST: 'Psicólogo',
-  PHYSICIAN: 'Médico',
-  LEGAL_GUARDIAN: 'Responsável legal'
-};
-
-export const USER_ROLE_OPTIONS = (Object.keys(USER_ROLE_LABELS) as UserRole[])
-  .map(value => ({
+export const USER_ROLE_OPTIONS = ALL_ROLES.map(value => ({
   value,
   label: USER_ROLE_LABELS[value]
 }));

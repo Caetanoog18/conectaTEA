@@ -1,40 +1,41 @@
 <section class="dashboard">
   <header>
-    <p class="eyebrow">Visão geral</p>
-    <h1>Painel do ConectaTEA</h1>
-    <p>
-      Gerencie estudantes, responsáveis, profissionais
-      e acompanhamentos em um ambiente seguro.
-    </p>
+    <p class="eyebrow">{{ access.roleLabel }}</p>
+    <h1>{{ content.title }}</h1>
+    <p>{{ content.description }}</p>
   </header>
 
-  <div class="information-grid">
-    <article>
-      <h2>Estudantes</h2>
-      <p>
-        Cadastre e acompanhe os estudantes da instituição.
-      </p>
-    </article>
+  @if (showProfessionalNotice) {
+    <div class="notice" role="note">
+      O acesso aos dados de cada estudante depende de vínculo
+      profissional vigente e consentimento válido.
+    </div>
+  }
 
-    <article>
-      <h2>Equipe de atendimento</h2>
-      <p>
-        Gerencie os profissionais vinculados aos estudantes.
-      </p>
-    </article>
+  @if (access.primaryRole === 'LEGAL_GUARDIAN') {
+    <div class="notice" role="note">
+      A conta de acesso precisa estar vinculada ao cadastro
+      de responsável. O cadastro e os vínculos são gerenciados
+      pela administração.
+    </div>
+  }
 
-    <article>
-      <h2>Observações</h2>
-      <p>
-        Registre e consulte o acompanhamento multiprofissional.
-      </p>
-    </article>
+  <section aria-labelledby="shortcuts-title">
+    <h2 id="shortcuts-title" class="section-title">
+      Acessos disponíveis
+    </h2>
 
-    <article>
-      <h2>Relatórios</h2>
-      <p>
-        Consulte informações consolidadas e gere documentos.
-      </p>
-    </article>
-  </div>
+    <div class="information-grid">
+      @for (item of shortcuts; track item.path) {
+        <article>
+          <h3>{{ item.label }}</h3>
+          <p>{{ item.description }}</p>
+
+          <a [routerLink]="item.path">
+            Acessar {{ item.label.toLowerCase() }}
+          </a>
+        </article>
+      }
+    </div>
+  </section>
 </section>

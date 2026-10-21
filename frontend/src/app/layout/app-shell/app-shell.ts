@@ -2,6 +2,7 @@ import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core'
 import {Router, RouterLink, RouterLinkActive, RouterOutlet} from '@angular/router';
 
 import {AuthService} from '../../core/auth/auth';
+import {AccessService} from '../../core/auth/access.service';
 
 @Component({
   selector: 'app-app-shell',
@@ -14,13 +15,20 @@ export class AppShell {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
+  readonly access = inject(AccessService);
   readonly menuOpen = signal(false);
-  readonly userEmail = this.authService.getCurrentUserEmail() ?? 'Usuário autenticado';
-  readonly roleLabel = this.resolveRoleLabel();
-  readonly isAdmin = this.authService.getCurrentUserRoles().includes('ADMINISTRATOR');
+
+  get userEmail(): string {
+    return this.authService.getCurrentUserEmail() ??
+      'Usuário autenticado';
+  }
+
+  get roleLabel(): string {
+    return this.access.roleLabel;
+  }
 
   toggleMenu(): void {
-    this.menuOpen.update((open) => !open);
+    this.menuOpen.update(open => !open);
   }
 
   closeMenu(): void {
@@ -28,26 +36,9 @@ export class AppShell {
   }
 
   logout(): void {
+    this.closeMenu();
     this.authService.logout();
+
     void this.router.navigate(['/login']);
-  }
-
-  private resolveRoleLabel(): string {
-    const systemRole = this.authService
-      .getCurrentUserRoles()
-      .find((role) => !role.startsWith('FACTOR_'));
-
-    const labels: Record<string, string> = {
-      ADMINISTRATOR: 'Administrador',
-      PEDAGOGICAL_COORDINATOR:
-        'Coordenador pedagógico',
-      TEACHER: 'Professor',
-      AEE_TEACHER: 'Professor de AEE',
-      PSYCHOLOGIST: 'Psicólogo',
-      PHYSICIAN: 'Médico',
-      LEGAL_GUARDIAN: 'Responsável legal'
-    };
-
-    return systemRole ? labels[systemRole] ?? systemRole : 'Usuário';
   }
 }

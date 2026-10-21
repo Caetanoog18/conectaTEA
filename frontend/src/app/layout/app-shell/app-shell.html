@@ -7,6 +7,8 @@
       type="button"
       class="menu-button"
       aria-label="Abrir ou fechar menu"
+      aria-controls="main-navigation"
+      [attr.aria-expanded]="menuOpen()"
       (click)="toggleMenu()"
     >
       ☰
@@ -38,53 +40,23 @@
 
   <aside class="sidebar">
     <nav
+      id="main-navigation"
       aria-label="Navegação principal"
       class="navigation"
     >
-      <a
-        routerLink="/dashboard"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        (click)="closeMenu()"
-      >
-        <span aria-hidden="true">⌂</span>
-        Painel
-      </a>
-      <a
-        routerLink="/students"
-        routerLinkActive="active"
-        (click)="closeMenu()"
-      >
-        <span aria-hidden="true">♙</span>
-        Estudantes
-      </a>
-      <a
-        routerLink="/guardians"
-        routerLinkActive="active"
-        (click)="closeMenu()"
-      >
-        <span aria-hidden="true">♧</span>
-        Responsáveis
-      </a>
-      @if (isAdmin) {
+      @for (item of access.navigation; track item.path) {
         <a
-          routerLink="/users"
+          [routerLink]="item.path"
           routerLinkActive="active"
+          [routerLinkActiveOptions]="{
+            exact: item.path === '/dashboard'
+          }"
           (click)="closeMenu()"
         >
-          <span aria-hidden="true">♙</span>
-          Usuários
+          <span aria-hidden="true">{{ item.symbol }}</span>
+          {{ item.label }}
         </a>
       }
-
-      <a
-        routerLink="/institution"
-        routerLinkActive="active"
-        (click)="closeMenu()"
-      >
-        <span aria-hidden="true">⌂</span>
-        Instituição
-      </a>
     </nav>
   </aside>
 
@@ -98,6 +70,6 @@
   }
 
   <main class="content">
-    <router-outlet/>
+    <router-outlet />
   </main>
 </div>

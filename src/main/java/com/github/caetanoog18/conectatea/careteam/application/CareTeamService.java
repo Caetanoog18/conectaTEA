@@ -15,6 +15,10 @@ import com.github.caetanoog18.conectatea.identity.domain.UserRole;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.careteam.api.dto.ProfessionalOptionResponse;
+import com.github.caetanoog18.conectatea.shared.api.dto.PagedResponse;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -200,6 +204,21 @@ public class CareTeamService {
         }
 
         return user;
+    }
+
+    public PagedResponse<ProfessionalOptionResponse> findProfessionals(int page, int size, String authenticatedEmail) {
+        requireActiveManager(authenticatedEmail);
+
+        PageRequest pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("fullName").ascending().and(Sort.by("id").ascending()));
+
+        var professionals = userRepository
+                .findByActiveTrueAndRoleIn(PROFESSIONAL_ROLES, pageable)
+                .map(ProfessionalOptionResponse::from);
+
+        return PagedResponse.from(professionals);
     }
 
     private static LocalDate currentDate() {

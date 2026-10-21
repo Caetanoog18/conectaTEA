@@ -48,4 +48,7 @@ logs/
 
 run_application_backend_test.txt
 
-/frontend/
+frontend/.vscode
+frontend/.angular
+frontend/dist
+frontend/node_modules

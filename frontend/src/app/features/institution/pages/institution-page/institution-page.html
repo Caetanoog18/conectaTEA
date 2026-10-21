@@ -1,0 +1,110 @@
+<section class="management-page form-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Administração</p>
+      <h1>Instituição</h1>
+
+      <p>
+        {{
+          isAdmin
+            ? 'Consulte e atualize os dados da instituição.'
+            : 'Consulte os dados da instituição.'
+        }}
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="secondary-button"
+      [disabled]="loading() || saving()"
+      (click)="load()"
+    >
+      Recarregar dados
+    </button>
+  </header>
+
+  @if (successMessage()) {
+    <div class="message success" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="message error" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="message" role="status">
+      Carregando instituição...
+    </div>
+  } @else if (ready()) {
+    @if (!institution() && !isAdmin) {
+      <div class="message">
+        A instituição ainda não foi cadastrada.
+      </div>
+    } @else {
+      @if (!institution()) {
+        <p class="help-text">
+          Nenhuma instituição cadastrada. Preencha os dados
+          para realizar o cadastro inicial.
+        </p>
+      }
+
+      <form
+        class="card"
+        [formGroup]="form"
+        (ngSubmit)="save()"
+        [attr.aria-busy]="saving()"
+      >
+        <fieldset [disabled]="!isAdmin || saving()">
+          <div class="form-grid">
+            @for (field of fields; track field.key) {
+              <div class="form-field">
+                <label [for]="field.key">
+                  {{ field.label }}
+                </label>
+
+                <input
+                  [id]="field.key"
+                  [type]="field.type"
+                  [formControlName]="field.key"
+                  [attr.maxlength]="field.maxLength"
+                  [required]="field.required"
+                >
+
+                @if (
+                  form.get(field.key)?.touched &&
+                  form.get(field.key)?.invalid
+                  ) {
+                  <small>
+                    Confira o campo {{ field.label }}.
+                  </small>
+                }
+              </div>
+            }
+          </div>
+        </fieldset>
+
+        @if (isAdmin) {
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="primary-button"
+              [disabled]="saving()"
+            >
+              {{
+                saving()
+                  ? 'Salvando...'
+                  : institution()
+                    ? 'Salvar alterações'
+                    : 'Cadastrar instituição'
+              }}
+            </button>
+          </div>
+        }
+      </form>
+    }
+  }
+</section>

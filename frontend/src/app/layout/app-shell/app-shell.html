@@ -66,6 +66,25 @@
         <span aria-hidden="true">♧</span>
         Responsáveis
       </a>
+      @if (isAdmin) {
+        <a
+          routerLink="/users"
+          routerLinkActive="active"
+          (click)="closeMenu()"
+        >
+          <span aria-hidden="true">♙</span>
+          Usuários
+        </a>
+      }
+
+      <a
+        routerLink="/institution"
+        routerLinkActive="active"
+        (click)="closeMenu()"
+      >
+        <span aria-hidden="true">⌂</span>
+        Instituição
+      </a>
     </nav>
   </aside>
 

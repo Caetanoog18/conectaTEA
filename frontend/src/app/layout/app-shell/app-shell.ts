@@ -17,6 +17,7 @@ export class AppShell {
   readonly menuOpen = signal(false);
   readonly userEmail = this.authService.getCurrentUserEmail() ?? 'Usuário autenticado';
   readonly roleLabel = this.resolveRoleLabel();
+  readonly isAdmin = this.authService.getCurrentUserRoles().includes('ADMINISTRATOR');
 
   toggleMenu(): void {
     this.menuOpen.update((open) => !open);

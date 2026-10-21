@@ -1,0 +1,165 @@
+<section class="management-page form-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Administração</p>
+      <h1>Novo usuário</h1>
+      <p>Cadastre uma conta e selecione seu perfil de acesso.</p>
+    </div>
+
+    <a routerLink="/users" class="secondary-button">
+      Voltar para usuários
+    </a>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="message error" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <form
+    class="card"
+    [formGroup]="form"
+    (ngSubmit)="save()"
+    [attr.aria-busy]="saving()"
+  >
+    <fieldset [disabled]="saving()">
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="fullName">Nome completo</label>
+          <input
+            id="fullName"
+            formControlName="fullName"
+            maxlength="120"
+            autocomplete="name"
+            required
+          >
+
+          @if (
+            form.controls.fullName.touched &&
+            form.controls.fullName.invalid
+            ) {
+            <small>Informe o nome, com até 120 caracteres.</small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="cpf">CPF</label>
+          <input
+            id="cpf"
+            formControlName="cpf"
+            maxlength="14"
+            inputmode="numeric"
+            required
+          >
+
+          @if (
+            form.controls.cpf.touched &&
+            form.controls.cpf.invalid
+            ) {
+            <small>Informe um CPF válido.</small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="email">E-mail</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            maxlength="254"
+            autocomplete="email"
+            required
+          >
+
+          @if (
+            form.controls.email.touched &&
+            form.controls.email.invalid
+            ) {
+            <small>Informe um e-mail válido.</small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="role">Perfil</label>
+          <select id="role" formControlName="role" required>
+            <option value="">Selecione um perfil</option>
+
+            @for (role of roleOptions; track role.value) {
+              <option [value]="role.value">
+                {{ role.label }}
+              </option>
+            }
+          </select>
+
+          @if (
+            form.controls.role.touched &&
+            form.controls.role.invalid
+            ) {
+            <small>Selecione o perfil do usuário.</small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="password">Senha inicial</label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            autocomplete="new-password"
+            minlength="12"
+            maxlength="64"
+            required
+          >
+
+          @if (
+            form.controls.password.touched &&
+            form.controls.password.invalid
+            ) {
+            <small>Use uma senha entre 12 e 64 caracteres.</small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="confirmPassword">Confirmar senha</label>
+          <input
+            id="confirmPassword"
+            type="password"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            required
+          >
+
+          @if (
+            form.controls.confirmPassword.touched &&
+            (
+              form.controls.confirmPassword.invalid ||
+              form.hasError('passwordMismatch')
+            )
+            ) {
+            <small>As senhas devem ser iguais.</small>
+          }
+        </div>
+      </div>
+
+      <p class="help-text">
+        Criar uma conta de responsável ou profissional não estabelece
+        automaticamente vínculos com estudantes.
+      </p>
+    </fieldset>
+
+    <div class="form-actions">
+      <a routerLink="/users" class="secondary-button">
+        Voltar
+      </a>
+
+      <button
+        type="submit"
+        class="primary-button"
+        [disabled]="saving()"
+      >
+        {{ saving() ? 'Cadastrando...' : 'Cadastrar usuário' }}
+      </button>
+    </div>
+  </form>
+</section>

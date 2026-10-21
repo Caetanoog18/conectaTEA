@@ -1,5 +1,6 @@
 import {Routes} from '@angular/router';
 import {authGuard} from './core/auth/auth.guard';
+import {adminGuard} from './core/auth/admin.guard';
 
 export const routes: Routes = [
   {
@@ -90,6 +91,26 @@ export const routes: Routes = [
           import(
             './features/consents/pages/consent-form/consent-form'
             ).then(component => component.ConsentForm)
+      },
+      {
+        path: 'users/new',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/users/pages/user-form/user-form')
+            .then(component => component.UserForm)
+      },
+      {
+        path: 'users',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/users/pages/user-list/user-list')
+            .then(component => component.UserList)
+      },
+      {
+        path: 'institution',
+        loadComponent: () =>
+          import('./features/institution/pages/institution-page/institution-page')
+            .then(component => component.InstitutionPage)
       },
       {
         path: '',

@@ -44,11 +44,11 @@ public class Student {
     @Column(name = "class_name", length = 30)
     private String className;
 
-    @Column(nullable = false)
-    private boolean active;
-
     @Column(nullable = false, length = 11)
     private String cpf;
+
+    @Column(nullable = false)
+    private boolean active;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

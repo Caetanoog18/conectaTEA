@@ -10,12 +10,16 @@ import com.github.caetanoog18.conectatea.student.application.exception.Enrollmen
 import com.github.caetanoog18.conectatea.student.application.exception.StudentNotFoundException;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.shared.domain.Cpf;
+import com.github.caetanoog18.conectatea.shared.domain.CpfAlreadyInUseException;
+import com.github.caetanoog18.conectatea.shared.domain.RegistrationConflictException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.UUID;
 
@@ -50,6 +54,12 @@ public class StudentService {
             throw new EnrollmentNumberAlreadyInUseException();
         }
 
+        String cpf = Cpf.normalize(request.cpf());
+
+        if (studentRepository.existsByCpf(cpf)) {
+            throw new CpfAlreadyInUseException();
+        }
+
         Student student = new Student(
                 request.fullName(),
                 request.preferredName(),
@@ -57,7 +67,8 @@ public class StudentService {
                 request.enrollmentNumber(),
                 request.schoolYear(),
                 request.gradeLevel(),
-                request.className()
+                request.className(),
+                cpf
         );
 
         return StudentResponse.from(save(student));
@@ -92,6 +103,12 @@ public class StudentService {
             throw new EnrollmentNumberAlreadyInUseException();
         }
 
+        String cpf = Cpf.normalize(request.cpf());
+
+        if (studentRepository.existsByCpfAndIdNot(cpf, studentId)) {
+            throw new CpfAlreadyInUseException();
+        }
+
         student.update(
                 request.fullName(),
                 request.preferredName(),
@@ -99,7 +116,8 @@ public class StudentService {
                 request.enrollmentNumber(),
                 request.schoolYear(),
                 request.gradeLevel(),
-                request.className()
+                request.className(),
+                cpf
         );
 
         return StudentResponse.from(save(student));
@@ -139,7 +157,7 @@ public class StudentService {
         try {
             return studentRepository.saveAndFlush(student);
         } catch (DataIntegrityViolationException exception) {
-            throw new EnrollmentNumberAlreadyInUseException();
+            throw new RegistrationConflictException();
         }
     }
 }

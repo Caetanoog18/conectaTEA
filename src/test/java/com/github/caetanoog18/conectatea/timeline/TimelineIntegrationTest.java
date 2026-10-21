@@ -18,6 +18,7 @@ import com.github.caetanoog18.conectatea.observation.domain.Observation;
 import com.github.caetanoog18.conectatea.observation.infrastructure.ObservationRepository;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -75,17 +77,14 @@ class TimelineIntegrationTest {
                 UserRole.ADMINISTRATOR
         );
 
-        teacher = persistUser(
-                "timeline-teacher@example.com",
-                UserRole.TEACHER
-        );
+        teacher = persistUser("timeline-teacher@example.com", UserRole.TEACHER);
 
         student = persistStudent("TIMELINE-001");
 
         Guardian guardian = guardianRepository.saveAndFlush(
                 new Guardian(
                         "Responsavel de Teste",
-                        null,
+                        TestCpf.next(),
                         "timeline-guardian@example.com",
                         "00000000000",
                         null
@@ -323,7 +322,7 @@ class TimelineIntegrationTest {
 
     private User persistUser(String email, UserRole role) {
         return userRepository.saveAndFlush(
-                new User("Usuario de Teste", email, "temporary-password-hash", role)
+                new User("Usuario de Teste", email, "temporary-password-hash", role, TestCpf.next())
         );
     }
 
@@ -336,7 +335,8 @@ class TimelineIntegrationTest {
                         enrollmentNumber,
                         2026,
                         "5 ano",
-                        "Turma Teste"
+                        "Turma Teste",
+                        TestCpf.next()
                 )
         );
     }

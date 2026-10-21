@@ -1,5 +1,6 @@
 package com.github.caetanoog18.conectatea.student.api.dto;
 
+import org.hibernate.validator.constraints.br.CPF;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -35,6 +36,10 @@ public record StudentRequest(
         String gradeLevel,
 
         @Size(max = 30, message = "Class name must contain at most 30 characters")
-        String className
+        String className,
+
+        @NotBlank(message = "CPF is required")
+        @CPF(message = "CPF must be valid")
+        String cpf
 ) {
 }

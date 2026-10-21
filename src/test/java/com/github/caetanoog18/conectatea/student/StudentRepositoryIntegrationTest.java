@@ -3,6 +3,7 @@ package com.github.caetanoog18.conectatea.student;
 import com.github.caetanoog18.conectatea.TestcontainersConfiguration;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,7 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @Transactional
 class StudentRepositoryIntegrationTest {
@@ -33,21 +35,16 @@ class StudentRepositoryIntegrationTest {
                 "mat-2026-001",
                 2026,
                 "5 ano",
-                "Turma A"
+                "Turma A",
+                TestCpf.next()
         );
 
-        Student savedStudent =
-                studentRepository.saveAndFlush(student);
+        Student savedStudent = studentRepository.saveAndFlush(student);
 
         assertThat(savedStudent.getId()).isNotNull();
-        assertThat(savedStudent.getEnrollmentNumber())
-                .isEqualTo("MAT-2026-001");
+        assertThat(savedStudent.getEnrollmentNumber()).isEqualTo("MAT-2026-001");
         assertThat(savedStudent.isActive()).isTrue();
 
-        assertThat(
-                studentRepository.findByEnrollmentNumberIgnoreCase(
-                        "mat-2026-001"
-                )
-        ).contains(savedStudent);
+        assertThat(studentRepository.findByEnrollmentNumberIgnoreCase("mat-2026-001")).contains(savedStudent);
     }
 }

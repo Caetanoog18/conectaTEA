@@ -15,6 +15,7 @@ import com.github.caetanoog18.conectatea.identity.domain.UserRole;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,8 +30,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(properties = {
-        "app.security.jwt.secret=" +
-                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        "app.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "app.bootstrap.admin.email=",
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @Transactional
 class ConsentTermRepositoryIntegrationTest {
@@ -56,7 +59,8 @@ class ConsentTermRepositoryIntegrationTest {
                         "System Administrator",
                         "admin-consent@conectatea.com",
                         "temporary-password-hash",
-                        UserRole.ADMINISTRATOR
+                        UserRole.ADMINISTRATOR,
+                        TestCpf.next()
                 )
         );
 
@@ -68,14 +72,15 @@ class ConsentTermRepositoryIntegrationTest {
                         "MAT-CONSENT-001",
                         2026,
                         "5 ano",
-                        "Turma B"
+                        "Turma B",
+                        TestCpf.next()
                 )
         );
 
         Guardian guardian = guardianRepository.saveAndFlush(
                 new Guardian(
                         "Maria da Silva",
-                        "52998224725",
+                        TestCpf.next(),
                         "maria-consent@conectatea.com",
                         "47999999999",
                         null

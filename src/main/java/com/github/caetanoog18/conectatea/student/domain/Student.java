@@ -1,5 +1,6 @@
 package com.github.caetanoog18.conectatea.student.domain;
 
+import com.github.caetanoog18.conectatea.shared.domain.Cpf;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -42,6 +44,9 @@ public class Student {
     @Column(name = "class_name", length = 30)
     private String className;
 
+    @Column(nullable = false, length = 11)
+    private String cpf;
+
     @Column(nullable = false)
     private boolean active;
 
@@ -63,7 +68,8 @@ public class Student {
             String enrollmentNumber,
             int schoolYear,
             String gradeLevel,
-            String className
+            String className,
+            String cpf
     ) {
         this.fullName = fullName.trim();
         this.preferredName = normalizeOptionalText(preferredName);
@@ -74,6 +80,7 @@ public class Student {
         this.schoolYear = schoolYear;
         this.gradeLevel = gradeLevel.trim();
         this.className = normalizeOptionalText(className);
+        this.cpf = Cpf.normalize(cpf);
     }
 
     public Student(
@@ -83,7 +90,8 @@ public class Student {
             String enrollmentNumber,
             int schoolYear,
             String gradeLevel,
-            String className
+            String className,
+            String cpf
     ) {
         update(
                 fullName,
@@ -92,7 +100,8 @@ public class Student {
                 enrollmentNumber,
                 schoolYear,
                 gradeLevel,
-                className
+                className,
+                cpf
         );
 
         this.active = true;
@@ -128,6 +137,10 @@ public class Student {
 
     public String getClassName() {
         return className;
+    }
+
+    public String getCpf() {
+        return cpf;
     }
 
     public boolean isActive() {

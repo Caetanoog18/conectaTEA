@@ -18,6 +18,7 @@ import com.github.caetanoog18.conectatea.observation.domain.Observation;
 import com.github.caetanoog18.conectatea.observation.infrastructure.ObservationRepository;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -85,7 +87,7 @@ class ObservationManagementIntegrationTest {
         Guardian guardian = guardianRepository.saveAndFlush(
                 new Guardian(
                         "Responsavel de Teste",
-                        null,
+                        TestCpf.next(),
                         "observation-guardian@example.com",
                         "00000000000",
                         null
@@ -355,7 +357,8 @@ class ObservationManagementIntegrationTest {
                         "Usuario de Teste",
                         email,
                         "temporary-password-hash",
-                        role
+                        role,
+                        TestCpf.next()
                 )
         );
     }
@@ -369,7 +372,8 @@ class ObservationManagementIntegrationTest {
                         enrollmentNumber,
                         2026,
                         "5 ano",
-                        "Turma Teste"
+                        "Turma Teste",
+                        TestCpf.next()
                 )
         );
     }

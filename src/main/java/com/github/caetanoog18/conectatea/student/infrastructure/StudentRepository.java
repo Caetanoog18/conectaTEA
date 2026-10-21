@@ -21,4 +21,7 @@ public interface StudentRepository
             String enrollmentNumber,
             UUID id
     );
+
+    boolean existsByCpf(String cpf);
+    boolean existsByCpfAndIdNot(String cpf, UUID id);
 }

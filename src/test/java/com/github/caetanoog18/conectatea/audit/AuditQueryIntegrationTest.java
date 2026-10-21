@@ -7,6 +7,7 @@ import com.github.caetanoog18.conectatea.audit.infrastructure.AuditEventReposito
 import com.github.caetanoog18.conectatea.identity.domain.User;
 import com.github.caetanoog18.conectatea.identity.domain.UserRole;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -57,7 +59,8 @@ class AuditQueryIntegrationTest {
                         "Administrador Teste",
                         "audit-query-admin-" + tag + "@example.com",
                         "temporary-password-hash",
-                        UserRole.ADMINISTRATOR
+                        UserRole.ADMINISTRATOR,
+                        TestCpf.next()
                 )
         );
 
@@ -66,7 +69,8 @@ class AuditQueryIntegrationTest {
                         "Professor Teste",
                         "audit-query-teacher-" + tag + "@example.com",
                         "temporary-password-hash",
-                        UserRole.TEACHER
+                        UserRole.TEACHER,
+                        TestCpf.next()
                 )
         );
 

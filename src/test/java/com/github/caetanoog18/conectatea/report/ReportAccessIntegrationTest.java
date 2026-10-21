@@ -17,6 +17,7 @@ import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
 import com.github.caetanoog18.conectatea.report.application.ReportAccessService;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @Transactional
 class ReportAccessIntegrationTest {
@@ -69,7 +71,8 @@ class ReportAccessIntegrationTest {
                         "REPORT-" + UUID.randomUUID(),
                         2026,
                         "5 ano",
-                        "Turma Teste"
+                        "Turma Teste",
+                        TestCpf.next()
                 )
         );
 
@@ -210,7 +213,8 @@ class ReportAccessIntegrationTest {
                         "Usuario Teste",
                         "report-" + UUID.randomUUID() + "@example.com",
                         "temporary-password-hash",
-                        role
+                        role,
+                        TestCpf.next()
                 )
         );
     }
@@ -230,7 +234,7 @@ class ReportAccessIntegrationTest {
         Guardian guardian = guardianRepository.saveAndFlush(
                 new Guardian(
                         "Responsavel Teste",
-                        null,
+                        TestCpf.next(),
                         "report-guardian-" + UUID.randomUUID() + "@example.com",
                         "00000000000",
                         null

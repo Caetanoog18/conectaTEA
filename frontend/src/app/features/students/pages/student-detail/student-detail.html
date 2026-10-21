@@ -170,6 +170,22 @@
                       >
                         Editar vínculo
                       </a>
+
+                      <a
+                        class="secondary-button"
+                        [routerLink]="[
+                          '/students',
+                          currentStudent.id,
+                          'guardian-links',
+                          guardian.id,
+                          'consents'
+                        ]"
+                        [attr.aria-label]="
+                          'Consultar consentimentos de ' + guardian.guardianName
+                        "
+                      >
+                        Consentimentos
+                      </a>
                     </div>
                   </td>
                 </tr>

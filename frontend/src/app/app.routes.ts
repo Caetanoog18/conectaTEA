@@ -50,6 +50,13 @@ export const routes: Routes = [
             ).then(component => component.ProfessionalLinkForm)
       },
       {
+        path: 'students/:studentId/guardian-links/:linkId/consents',
+        loadComponent: () =>
+          import(
+            './features/consents/pages/consent-history/consent-history'
+            ).then(component => component.ConsentHistory)
+      },
+      {
         path: 'students/:studentId',
         loadComponent: () =>
           import('./features/students/pages/student-detail/student-detail')
@@ -76,6 +83,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/guardians/pages/guardian-form/guardian-form')
             .then(component => component.GuardianForm)
+      },
+      {
+        path: 'students/:studentId/guardian-links/:linkId/consents/new',
+        loadComponent: () =>
+          import(
+            './features/consents/pages/consent-form/consent-form'
+            ).then(component => component.ConsentForm)
       },
       {
         path: '',

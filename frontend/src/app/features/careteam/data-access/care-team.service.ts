@@ -4,6 +4,7 @@ import {Observable} from 'rxjs';
 import {PagedResponse} from '../../../core/models/paged-response';
 import {
   CreateProfessionalLinkRequest,
+  EndProfessionalLinkRequest,
   ProfessionalLink,
   ProfessionalOption
 } from './care-team.models';
@@ -34,6 +35,13 @@ export class CareTeamService {
   create(studentId: string, request: CreateProfessionalLinkRequest): Observable<ProfessionalLink> {
     return this.http.post<ProfessionalLink>(
       `/api/students/${studentId}/care-team`,
+      request
+    );
+  }
+
+  end(linkId: string, request: EndProfessionalLinkRequest): Observable<ProfessionalLink> {
+    return this.http.patch<ProfessionalLink>(
+      `/api/care-team-links/${linkId}/end`,
       request
     );
   }

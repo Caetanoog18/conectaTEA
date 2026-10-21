@@ -7,6 +7,7 @@
     <p>
       Profissionais vinculados ao estudante e histórico de participação.
     </p>
+
     @if (studentActive) {
       <a
         class="secondary-button"
@@ -16,6 +17,99 @@
       </a>
     }
   </header>
+
+  @if (successMessage()) {
+    <div class="feedback success" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (selectedLink(); as selected) {
+    <form
+      class="end-confirmation"
+      [formGroup]="endForm"
+      (ngSubmit)="confirmEnd()"
+      aria-labelledby="end-link-title"
+      [attr.aria-busy]="ending()"
+    >
+      <h3 id="end-link-title">Encerrar vínculo profissional</h3>
+
+      <p>
+        Deseja encerrar o acompanhamento de
+        <strong>{{ selected.professionalName }}</strong>?
+      </p>
+
+      <p>
+        O registro permanecerá no histórico. A data de encerramento
+        será definida pelo sistema.
+      </p>
+
+      <fieldset [disabled]="ending()">
+        <label for="endReason">Motivo do encerramento *</label>
+
+        <textarea
+          id="endReason"
+          formControlName="reason"
+          rows="4"
+          maxlength="500"
+          required
+          aria-describedby="endReason-help"
+          [attr.aria-invalid]="
+            endForm.controls.reason.touched &&
+            endForm.controls.reason.invalid
+          "
+        ></textarea>
+
+        <small id="endReason-help">
+          Informe o motivo com até 500 caracteres.
+          {{ endForm.controls.reason.value.length }}/500
+        </small>
+
+        @if (
+          endForm.controls.reason.touched &&
+          endForm.controls.reason.invalid
+          ) {
+          <p class="error-message" role="alert">
+            O motivo é obrigatório e deve conter até 500 caracteres.
+          </p>
+        }
+
+        <div class="confirmation-actions">
+          <button
+            type="button"
+            class="secondary-button"
+            [disabled]="ending()"
+            (click)="cancelEnd()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="danger-button"
+            [disabled]="ending()"
+          >
+            {{ ending() ? 'Encerrando...' : 'Confirmar encerramento' }}
+          </button>
+        </div>
+      </fieldset>
+    </form>
+  }
+
+  @if (actionErrorMessage()) {
+    <div class="feedback error-message" role="alert">
+      <p>{{ actionErrorMessage() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="ending()"
+        (click)="load()"
+      >
+        Atualizar equipe
+      </button>
+    </div>
+  }
 
   @if (loading()) {
     <p role="status">Carregando equipe...</p>
@@ -44,6 +138,7 @@
           <th scope="col">Encerramento</th>
           <th scope="col">Status do vínculo</th>
           <th scope="col">Motivo do encerramento</th>
+          <th scope="col">Ações</th>
         </tr>
         </thead>
 
@@ -54,9 +149,7 @@
                 <strong>{{ link.professionalName }}</strong>
               </td>
 
-              <td>
-                {{ roleLabel(link.professionalRole) }}
-              </td>
+              <td>{{ roleLabel(link.professionalRole) }}</td>
 
               <td>
                 {{ link.startedOn | date:'dd/MM/yyyy':'UTC' }}
@@ -81,6 +174,24 @@
 
               <td class="reason">
                 {{ link.endReason || '—' }}
+              </td>
+
+              <td>
+                @if (link.active) {
+                  <button
+                    type="button"
+                    class="danger-button"
+                    [disabled]="ending()"
+                    [attr.aria-label]="
+                      'Encerrar vínculo de ' + link.professionalName
+                    "
+                    (click)="requestEnd(link)"
+                  >
+                    Encerrar vínculo
+                  </button>
+                } @else {
+                  —
+                }
               </td>
             </tr>
           }

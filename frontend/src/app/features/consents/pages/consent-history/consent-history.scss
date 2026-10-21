@@ -1,0 +1,283 @@
+.consent-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  color: #294b45;
+}
+
+.page-header,
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.page-header {
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin: 0.35rem 0 0.75rem;
+    color: #173f39;
+    font-size: 2rem;
+  }
+
+  p {
+    margin: 0;
+    color: #637773;
+  }
+
+  .eyebrow {
+    color: #176b5d;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  box-sizing: border-box;
+  border: 1px solid #b9cbc6;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #294b45;
+  font: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid #176b5d;
+    outline-offset: 3px;
+  }
+}
+
+.message,
+.consent-card {
+  padding: 1.5rem;
+  border: 1px solid #dbe5e2;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.message {
+  text-align: center;
+  color: #637773;
+
+  &.error {
+    border-color: #f5b7b1;
+    background: #fff1f0;
+    color: #9f231b;
+  }
+}
+
+.consent-card {
+  margin-bottom: 1.25rem;
+
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    overflow-wrap: anywhere;
+  }
+
+  h3 {
+    margin: 1.25rem 0 0.75rem;
+    font-size: 1rem;
+  }
+
+  p {
+    margin: 0;
+    color: #637773;
+  }
+}
+
+.status {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: #dcefeb;
+  color: #176b5d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &.revoked {
+    background: #fde8e7;
+    color: #9f231b;
+  }
+
+  &.expired {
+    background: #f1f2f2;
+    color: #687572;
+  }
+}
+
+.consent-data {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+
+  dt {
+    margin-bottom: 0.35rem;
+    color: #637773;
+    font-size: 0.875rem;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+}
+
+.purpose-list {
+  margin: 0;
+  padding-left: 1.25rem;
+
+  li + li {
+    margin-top: 0.5rem;
+  }
+}
+
+.revocation {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dbe5e2;
+
+  h3 {
+    margin-top: 0;
+  }
+
+  .reason {
+    margin-top: 0.75rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 700px) {
+  .page-header {
+    flex-direction: column;
+  }
+
+  .consent-data {
+    grid-template-columns: 1fr;
+  }
+}
+
+.history-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.25rem;
+}
+
+.revocation-confirmation {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #e7b6b1;
+  border-radius: 0.75rem;
+  background: #fff8f7;
+  color: #294b45;
+
+  h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.25rem;
+  }
+
+  p {
+    line-height: 1.5;
+  }
+
+  fieldset {
+    min-width: 0;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    border: 0;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.75rem;
+    border: 1px solid #b9cbc6;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #294b45;
+    font: inherit;
+    resize: vertical;
+
+    &:focus-visible {
+      outline: 2px solid #176b5d;
+      outline-offset: 2px;
+    }
+  }
+
+  small {
+    display: block;
+    margin-top: 0.5rem;
+    color: #637773;
+  }
+}
+
+.confirmation-actions,
+.consent-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #b42318;
+  border-radius: 0.5rem;
+  background: #b42318;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid #b42318;
+    outline-offset: 3px;
+  }
+}
+
+.error-text {
+  color: #b42318;
+}
+
+.message {
+  margin-bottom: 1.25rem;
+
+  &.success {
+    border-color: #a6d7bf;
+    background: #edf8f1;
+    color: #185c3a;
+  }
+
+  button {
+    margin-top: 0.75rem;
+  }
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

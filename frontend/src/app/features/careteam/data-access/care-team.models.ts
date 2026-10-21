@@ -36,3 +36,7 @@ export interface CreateProfessionalLinkRequest {
   professionalId: string;
   startedOn: string;
 }
+
+export interface EndProfessionalLinkRequest {
+  reason: string;
+}

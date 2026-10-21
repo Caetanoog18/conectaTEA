@@ -65,6 +65,7 @@ class OpenApiContractCompletenessTest {
             "/api/consents/{consentId}",
             "/api/consents/{consentId}/revoke",
 
+            "/api/care-team/professionals",
             "/api/students/{studentId}/care-team",
             "/api/care-team-links/{linkId}",
             "/api/care-team-links/{linkId}/end",
@@ -117,6 +118,7 @@ class OpenApiContractCompletenessTest {
             "listConsentHistory",
             "revokeConsent",
 
+            "listCareTeamProfessionals",
             "createProfessionalLink",
             "listStudentCareTeam",
             "getProfessionalLink",

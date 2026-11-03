@@ -78,7 +78,10 @@ class OpenApiContractCompletenessTest {
             "/api/audit-events",
 
             "/api/me/students/{studentId}/reports",
-            "/api/me/students/{studentId}/reports/pdf"
+            "/api/me/students/{studentId}/reports/pdf",
+
+            "/api/me/students",
+            "/api/me/students/{studentId}/legal-guardians"
     );
 
     private static final Set<String> EXPECTED_OPERATION_IDS = Set.of(
@@ -134,7 +137,10 @@ class OpenApiContractCompletenessTest {
             "searchAuditEvents",
 
             "generateStudentReport",
-            "exportStudentReportPdf"
+            "exportStudentReportPdf",
+
+            "listAccessibleStudents",
+            "listAccessibleLegalGuardianContacts"
     );
 
     @Autowired

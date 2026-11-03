@@ -1,0 +1,146 @@
+<section class="management-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Acompanhamento</p>
+      <h1>Estudantes acompanhados</h1>
+
+      <p>
+        Consulte os estudantes disponíveis para seu acompanhamento.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="secondary-button"
+      [disabled]="loading()"
+      (click)="loadPage(0)"
+    >
+      Atualizar listagem
+    </button>
+  </header>
+
+  <p class="help-text">
+    A disponibilidade depende de vínculo profissional vigente
+    e consentimento válido.
+  </p>
+
+  @if (loading()) {
+    <div class="message" role="status">
+      Carregando estudantes acompanhados...
+    </div>
+  } @else if (errorMessage()) {
+    <div class="message error" role="alert">
+      <p>{{ errorMessage() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="loadPage(currentPage())"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (students().length === 0) {
+    <div class="message">
+      <p>
+        Nenhum estudante disponível nesta página.
+        Se você esperava encontrar um estudante,
+        solicite à coordenação a verificação do vínculo
+        e dos consentimentos.
+      </p>
+
+      @if (currentPage() > 0) {
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="loadPage(0)"
+        >
+          Voltar à primeira página
+        </button>
+      }
+    </div>
+  } @else {
+    <p class="result-count">
+      {{ totalElements() }}
+      {{
+        totalElements() === 1
+          ? 'estudante disponível'
+          : 'estudantes disponíveis'
+      }}
+    </p>
+
+    <div class="table-container">
+      <table>
+        <thead>
+        <tr>
+          <th scope="col">Nome</th>
+          <th scope="col">Matrícula</th>
+          <th scope="col">Ano letivo</th>
+          <th scope="col">Ano/Série</th>
+          <th scope="col">Turma</th>
+          <th scope="col">Ações</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (student of students(); track student.id) {
+            <tr>
+              <td>
+                <strong>{{ student.fullName }}</strong>
+
+                @if (student.preferredName) {
+                  <small>
+                    Nome preferido: {{ student.preferredName }}
+                  </small>
+                }
+              </td>
+
+              <td>{{ student.enrollmentNumber }}</td>
+              <td>{{ student.schoolYear }}</td>
+              <td>{{ student.gradeLevel }}</td>
+              <td>{{ student.className }}</td>
+
+              <td>
+                <a
+                  class="secondary-button"
+                  [routerLink]="['/my-students', student.id]"
+                  [attr.aria-label]="
+                    'Abrir acompanhamento de ' + student.fullName
+                  "
+                >
+                  Abrir acompanhamento
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pagination">
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="currentPage() === 0 || loading()"
+        (click)="loadPage(currentPage() - 1)"
+      >
+        Anterior
+      </button>
+
+      <span>
+        Página {{ currentPage() + 1 }} de {{ totalPages() }}
+      </span>
+
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="
+          currentPage() + 1 >= totalPages() || loading()
+        "
+        (click)="loadPage(currentPage() + 1)"
+      >
+        Próxima
+      </button>
+    </footer>
+  }
+</section>

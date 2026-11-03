@@ -9,7 +9,7 @@ import {
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {roleGuard} from './role.guard';
 import {AuthService} from './auth';
-import {ADMIN_ROLES, ALL_ROLES, MANAGEMENT_ROLES, UserRole} from './roles';
+import {ADMIN_ROLES, ALL_ROLES, MANAGEMENT_ROLES, PROFESSIONAL_ROLES, UserRole} from './roles';
 
 describe('roleGuard', () => {
   const auth = {
@@ -90,4 +90,22 @@ describe('roleGuard', () => {
     expect(result).toBeInstanceOf(UrlTree);
     expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/login?returnUrl=%2Fstudents');
   });
+
+  it.each([...ALL_ROLES])(
+    'should enforce professional route permissions for %s',
+    role => {
+      auth.getCurrentUserRoles.mockReturnValue([role]);
+
+      const result = execute(PROFESSIONAL_ROLES);
+
+      if (PROFESSIONAL_ROLES.includes(role)) {
+        expect(result).toBe(true);
+      } else {
+        expect(result).toBeInstanceOf(UrlTree);
+        expect(
+          TestBed.inject(Router).serializeUrl(result as UrlTree)
+        ).toBe('/access-denied');
+      }
+    }
+  );
 });

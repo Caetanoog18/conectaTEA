@@ -96,6 +96,16 @@ export class AccessService {
       });
     }
 
+    if (this.isProfessional()) {
+      items.push({
+        path: '/my-students',
+        label: 'Estudantes acompanhados',
+        description:
+          'Consulte estudantes e contatos autorizados para seu acompanhamento.',
+        symbol: '♙'
+      });
+    }
+
     items.push({
       path: '/institution',
       label: 'Instituição',

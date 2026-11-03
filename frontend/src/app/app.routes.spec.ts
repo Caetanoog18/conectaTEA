@@ -3,7 +3,7 @@ import {describe, expect, it} from 'vitest';
 import {routes} from './app.routes';
 import {authGuard} from './core/auth/auth.guard';
 import {roleGuard} from './core/auth/role.guard';
-import {ADMIN_ROLES, MANAGEMENT_ROLES} from './core/auth/roles';
+import {ADMIN_ROLES, MANAGEMENT_ROLES, PROFESSIONAL_ROLES} from './core/auth/roles';
 
 describe('Application route permissions', () => {
   const shell = routes.find(route => route.path === '');
@@ -45,5 +45,17 @@ describe('Application route permissions', () => {
 
     expect(deniedRoute).toBeDefined();
     expect(deniedRoute?.data?.['roles']).toBeUndefined();
+  });
+
+  it('should protect professional follow-up routes', () => {
+    const professionalRoutes = children.filter(route =>
+      route.path?.startsWith('my-students')
+    );
+
+    expect(professionalRoutes).toHaveLength(3);
+
+    for (const route of professionalRoutes) {
+      expect(route.data?.['roles']).toEqual(PROFESSIONAL_ROLES);
+    }
   });
 });

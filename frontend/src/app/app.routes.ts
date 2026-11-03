@@ -1,7 +1,8 @@
 import {Routes} from '@angular/router';
 import {authGuard} from './core/auth/auth.guard';
 import {roleGuard} from './core/auth/role.guard';
-import {ADMIN_ROLES, MANAGEMENT_ROLES} from './core/auth/roles';
+import {ADMIN_ROLES, MANAGEMENT_ROLES, PROFESSIONAL_ROLES} from './core/auth/roles';
+
 
 const managementAccess = {
   roles: MANAGEMENT_ROLES
@@ -9,6 +10,10 @@ const managementAccess = {
 
 const administratorAccess = {
   roles: ADMIN_ROLES
+};
+
+const professionalAccess = {
+  roles: PROFESSIONAL_ROLES
 };
 
 export const routes: Routes = [
@@ -147,6 +152,30 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/institution/pages/institution-page/institution-page')
             .then(component => component.InstitutionPage)
+      },
+      {
+        path: 'my-students/:studentId/records',
+        data: professionalAccess,
+        loadComponent: () =>
+          import(
+            './features/follow-up/pages/student-records/student-records'
+            ).then(component => component.StudentRecords)
+      },
+      {
+        path: 'my-students/:studentId',
+        data: professionalAccess,
+        loadComponent: () =>
+          import(
+            './features/follow-up/pages/follow-up-detail/follow-up-detail'
+            ).then(component => component.FollowUpDetail)
+      },
+      {
+        path: 'my-students',
+        data: professionalAccess,
+        loadComponent: () =>
+          import(
+            './features/follow-up/pages/follow-up-list/follow-up-list'
+            ).then(component => component.FollowUpList)
       },
       {
         path: '',

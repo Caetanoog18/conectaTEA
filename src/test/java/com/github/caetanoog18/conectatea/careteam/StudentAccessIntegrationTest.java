@@ -143,6 +143,255 @@ class StudentAccessIntegrationTest {
     }
 
     @Test
+    void directoryShouldListOnlyAuthorizedStudents() throws Exception {
+        grantConsent();
+
+        persistStudent("MAT-DIRECTORY-UNAUTHORIZED");
+
+        readDirectory()
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(student.getId().toString()))
+                .andExpect(jsonPath("$.content[0].cpf").doesNotExist());
+    }
+
+    @Test
+    void directoryShouldBeEmptyWithoutConsent() throws Exception {
+        readDirectory()
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.content.length()").value(0));
+    }
+
+    @Test
+    void directoryShouldExcludeStudentsWithoutProfessionalLink() throws Exception {
+        grantConsent();
+
+        professionalLink.end(
+                today(),
+                administrator.getId(),
+                "End of care"
+        );
+        professionalLinkRepository.saveAndFlush(professionalLink);
+
+        readDirectory()
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        readContacts().andExpect(status().isForbidden());
+    }
+
+    @Test
+    void directoryShouldExcludeExpiredConsent() throws Exception {
+        grantConsent(
+                requiredPurposes(),
+                Instant.now().minusSeconds(172800),
+                today().minusDays(1)
+        );
+
+        readDirectory()
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        readContacts().andExpect(status().isForbidden());
+    }
+
+    @Test
+    void revokedConsentShouldBlockDirectoryAndContacts()
+            throws Exception {
+        ConsentTerm consent = grantConsent();
+
+        consent.revoke(
+                Instant.now(),
+                administrator.getId(),
+                "Guardian withdrew consent"
+        );
+        consentRepository.saveAndFlush(consent);
+
+        readDirectory()
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        readContacts().andExpect(status().isForbidden());
+    }
+
+    @Test
+    void contactsShouldNotExposeCpfOrUserAccount() throws Exception {
+        grantConsent();
+
+        readContacts()
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].guardianId").value(guardian.getId().toString()))
+                .andExpect(jsonPath("$[0].fullName").value(guardian.getFullName()))
+                .andExpect(jsonPath("$[0].phone").value(guardian.getPhone()))
+                .andExpect(jsonPath("$[0].cpf").doesNotExist())
+                .andExpect(jsonPath("$[0].userId").doesNotExist());
+    }
+
+    @Test
+    void contactsShouldExcludeGuardianWithoutOwnValidConsent() throws Exception {
+        grantConsent();
+
+        Guardian anotherGuardian = guardianRepository.saveAndFlush(
+                new Guardian(
+                        "Another Legal Guardian",
+                        TestCpf.next(),
+                        "another-contact@example.com",
+                        "47988887777",
+                        null
+                )
+        );
+
+        guardianLinkRepository.saveAndFlush(
+                new StudentGuardian(
+                        student,
+                        anotherGuardian,
+                        GuardianRelationship.FATHER,
+                        true,
+                        false
+                )
+        );
+
+        readContacts()
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].guardianId").value(guardian.getId().toString()));
+    }
+
+    @Test
+    void inactiveGuardianShouldBlockDirectoryAndContacts() throws Exception {
+        grantConsent();
+
+        guardian.deactivate();
+        guardianRepository.saveAndFlush(guardian);
+
+        readDirectory()
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        readContacts().andExpect(status().isForbidden());
+    }
+
+    @Test
+    void inactiveStudentShouldDisappearFromDirectory() throws Exception {
+        grantConsent();
+
+        student.deactivate();
+        studentRepository.saveAndFlush(student);
+
+        readDirectory()
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        readContacts().andExpect(status().isForbidden());
+    }
+
+    @Test
+    void physicianShouldReadAuthorizedLegalGuardianContacts() throws Exception {
+        User physician = userRepository.saveAndFlush(
+                new User(
+                        "Directory Physician",
+                        "directory-physician@example.com",
+                        "temporary-password-hash",
+                        UserRole.PHYSICIAN,
+                        TestCpf.next()
+                )
+        );
+
+        professionalLinkRepository.saveAndFlush(
+                new StudentProfessionalLink(
+                        student,
+                        physician,
+                        today(),
+                        administrator.getId()
+                )
+        );
+
+        grantConsent(
+                Set.of(
+                        ConsentPurpose.MULTIPROFESSIONAL_MONITORING,
+                        ConsentPurpose.INFORMATION_SHARING_WITH_CARE_TEAM
+                ),
+                Instant.now().minusSeconds(60),
+                today().plusYears(1)
+        );
+
+        RequestPostProcessor physicianToken = jwt()
+                .jwt(token -> token.subject(physician.getEmail()))
+                .authorities(new SimpleGrantedAuthority("ROLE_PHYSICIAN"));
+
+        mockMvc.perform(get("/api/me/students").with(physicianToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        mockMvc.perform(
+                        get("/api/me/students/{studentId}/legal-guardians", student.getId())
+                                .with(physicianToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].guardianId").value(guardian.getId().toString()));
+    }
+
+    @Test
+    void directoryShouldRejectInactiveProfessional() throws Exception {
+        grantConsent();
+
+        professional.deactivate();
+        userRepository.saveAndFlush(professional);
+
+        readDirectory().andExpect(status().isForbidden());
+
+        readContacts().andExpect(status().isForbidden());
+    }
+
+    @Test
+    void directoryShouldRejectInvalidPagination() throws Exception {
+        mockMvc.perform(
+                        get("/api/me/students")
+                                .param("page", "-1")
+                                .with(professionalToken)
+                )
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(
+                        get("/api/me/students")
+                                .param("size", "101")
+                                .with(professionalToken)
+                )
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void directoryAndContactsShouldRequireAuthentication()
+            throws Exception {
+        mockMvc.perform(get("/api/me/students"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(
+                get("/api/me/students/{studentId}/legal-guardians", student.getId()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void administratorShouldNotHaveAutomaticProfessionalAccess() throws Exception {
+        RequestPostProcessor administratorToken = jwt()
+                .jwt(token -> token.subject(administrator.getEmail()))
+                .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"));
+
+        mockMvc.perform(
+                        get("/api/me/students")
+                                .with(administratorToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(
+                        get("/api/me/students/{studentId}/legal-guardians", student.getId())
+                                .with(administratorToken)
+                )
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void authorizedTeacherShouldReadStudent() throws Exception {
         grantConsent();
 
@@ -162,7 +411,8 @@ class StudentAccessIntegrationTest {
         grantConsent(
                 Set.of(ConsentPurpose.EDUCATIONAL_SUPPORT),
                 Instant.now().minusSeconds(60),
-                today().plusYears(1));
+                today().plusYears(1)
+        );
 
         readProfile(student.getId()).andExpect(status().isForbidden());
     }
@@ -170,7 +420,10 @@ class StudentAccessIntegrationTest {
     @Test
     void wrongProfessionalPurposeShouldBeRejected() throws Exception {
         grantConsent(
-                Set.of(ConsentPurpose.MULTIPROFESSIONAL_MONITORING, ConsentPurpose.INFORMATION_SHARING_WITH_CARE_TEAM),
+                Set.of(
+                        ConsentPurpose.MULTIPROFESSIONAL_MONITORING,
+                        ConsentPurpose.INFORMATION_SHARING_WITH_CARE_TEAM
+                ),
                 Instant.now().minusSeconds(60),
                 today().plusYears(1)
         );
@@ -184,7 +437,11 @@ class StudentAccessIntegrationTest {
 
         readProfile(student.getId()).andExpect(status().isOk());
 
-        consent.revoke(Instant.now(), administrator.getId(), "Guardian withdrew consent");
+        consent.revoke(
+                Instant.now(),
+                administrator.getId(),
+                "Guardian withdrew consent"
+        );
         consentRepository.saveAndFlush(consent);
 
         readProfile(student.getId()).andExpect(status().isForbidden());
@@ -224,6 +481,7 @@ class StudentAccessIntegrationTest {
                 Instant.now().plusSeconds(3600),
                 today().plusYears(1)
         );
+
         readProfile(student.getId()).andExpect(status().isForbidden());
     }
 
@@ -260,11 +518,11 @@ class StudentAccessIntegrationTest {
     @Test
     void nonLegalGuardianShouldNotAuthorizeAccess() throws Exception {
         grantConsent();
+
         guardianLink.update(GuardianRelationship.MOTHER, false, true);
         guardianLinkRepository.saveAndFlush(guardianLink);
 
-        readProfile(student.getId())
-                .andExpect(status().isForbidden());
+        readProfile(student.getId()).andExpect(status().isForbidden());
     }
 
     @Test
@@ -282,25 +540,39 @@ class StudentAccessIntegrationTest {
                 )
         );
 
-        readProfile(anotherStudent.getId())
-                .andExpect(status().isForbidden());
+        readProfile(anotherStudent.getId()).andExpect(status().isForbidden());
     }
 
     @Test
     void unauthenticatedRequestShouldBeRejected() throws Exception {
         mockMvc.perform(
-                        get("/api/me/students/{studentId}", student.getId()))
+                get("/api/me/students/{studentId}", student.getId()))
                 .andExpect(status().isUnauthorized());
+    }
+
+    private ResultActions readDirectory() throws Exception {
+        entityManager.flush();
+        entityManager.clear();
+
+        return mockMvc.perform(get("/api/me/students").with(professionalToken));
+    }
+
+    private ResultActions readContacts() throws Exception {
+        entityManager.flush();
+        entityManager.clear();
+
+        return mockMvc.perform(
+                get("/api/me/students/{studentId}/legal-guardians",
+                        student.getId()
+                ).with(professionalToken)
+        );
     }
 
     private ResultActions readProfile(UUID studentId) throws Exception {
         entityManager.flush();
         entityManager.clear();
 
-        return mockMvc.perform(
-                get("/api/me/students/{studentId}", studentId)
-                        .with(professionalToken)
-        );
+        return mockMvc.perform(get("/api/me/students/{studentId}", studentId).with(professionalToken));
     }
 
     private ConsentTerm grantConsent() {
@@ -311,7 +583,11 @@ class StudentAccessIntegrationTest {
         );
     }
 
-    private ConsentTerm grantConsent(Set<ConsentPurpose> purposes, Instant grantedAt, LocalDate validUntil) {
+    private ConsentTerm grantConsent(
+            Set<ConsentPurpose> purposes,
+            Instant grantedAt,
+            LocalDate validUntil
+    ) {
         return consentRepository.saveAndFlush(
                 new ConsentTerm(
                         guardianLink,
@@ -340,7 +616,10 @@ class StudentAccessIntegrationTest {
     }
 
     private static Set<ConsentPurpose> requiredPurposes() {
-        return Set.of(ConsentPurpose.EDUCATIONAL_SUPPORT, ConsentPurpose.INFORMATION_SHARING_WITH_CARE_TEAM);
+        return Set.of(
+                ConsentPurpose.EDUCATIONAL_SUPPORT,
+                ConsentPurpose.INFORMATION_SHARING_WITH_CARE_TEAM
+        );
     }
 
     private static LocalDate today() {

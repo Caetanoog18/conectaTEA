@@ -49,7 +49,19 @@
       >
         Observações e relatórios
       </a>
+
+      <a
+        class="secondary-button"
+        [routerLink]="[
+          '/my-students',
+          currentStudent.id,
+          'documents'
+        ]"
+      >
+        Laudos médicos
+      </a>
     </div>
+
     <section class="card" aria-labelledby="student-name">
       <h2 id="student-name">
         {{ currentStudent.fullName }}

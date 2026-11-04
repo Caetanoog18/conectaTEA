@@ -154,6 +154,14 @@ export const routes: Routes = [
             .then(component => component.InstitutionPage)
       },
       {
+        path: 'my-students/:studentId/documents',
+        data: professionalAccess,
+        loadComponent: () =>
+          import(
+            './features/follow-up/pages/student-documents/student-documents'
+            ).then(component => component.StudentDocuments)
+      },
+      {
         path: 'my-students/:studentId/records',
         data: professionalAccess,
         loadComponent: () =>

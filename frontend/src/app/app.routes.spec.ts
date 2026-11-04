@@ -52,7 +52,7 @@ describe('Application route permissions', () => {
       route.path?.startsWith('my-students')
     );
 
-    expect(professionalRoutes).toHaveLength(3);
+    expect(professionalRoutes).toHaveLength(4);
 
     for (const route of professionalRoutes) {
       expect(route.data?.['roles']).toEqual(PROFESSIONAL_ROLES);

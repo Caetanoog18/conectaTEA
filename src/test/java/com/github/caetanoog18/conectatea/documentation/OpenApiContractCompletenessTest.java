@@ -81,7 +81,10 @@ class OpenApiContractCompletenessTest {
             "/api/me/students/{studentId}/reports/pdf",
 
             "/api/me/students",
-            "/api/me/students/{studentId}/legal-guardians"
+            "/api/me/students/{studentId}/legal-guardians",
+
+            "/api/me/students/{studentId}/medical-documents",
+            "/api/me/students/{studentId}/medical-documents/{documentId}/file"
     );
 
     private static final Set<String> EXPECTED_OPERATION_IDS = Set.of(
@@ -139,8 +142,13 @@ class OpenApiContractCompletenessTest {
             "generateStudentReport",
             "exportStudentReportPdf",
 
+
             "listAccessibleStudents",
-            "listAccessibleLegalGuardianContacts"
+            "listAccessibleLegalGuardianContacts",
+
+            "uploadMedicalDocument",
+            "listMedicalDocuments",
+            "downloadMedicalDocument"
     );
 
     @Autowired

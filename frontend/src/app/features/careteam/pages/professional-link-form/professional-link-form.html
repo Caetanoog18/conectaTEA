@@ -1,0 +1,172 @@
+<section class="link-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Equipe multiprofissional</p>
+      <h1>Vincular profissional</h1>
+
+      @if (student(); as currentStudent) {
+        <p>{{ currentStudent.fullName }}</p>
+      }
+    </div>
+
+    <a
+      class="secondary-button"
+      [routerLink]="['/students', studentId]"
+    >
+      Voltar ao perfil
+    </a>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="message error" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <p role="status">Carregando dados...</p>
+  } @else if (!loadFailed()) {
+    @if (!student()?.active) {
+      <div class="message">
+        Ative o estudante antes de vincular um profissional.
+      </div>
+    } @else {
+      <section class="card" aria-labelledby="professionals-title">
+        <h2 id="professionals-title">1. Selecione o profissional</h2>
+
+        @if (selectedProfessional(); as selected) {
+          <p class="selection" role="status">
+            Selecionado: <strong>{{ selected.fullName }}</strong>
+          </p>
+        }
+
+        @if (professionalsLoading()) {
+          <p role="status">Carregando profissionais...</p>
+        } @else if (professionalsError()) {
+          <div role="alert">
+            <p>{{ professionalsError() }}</p>
+
+            <button
+              type="button"
+              class="secondary-button"
+              [disabled]="saving()"
+              (click)="loadProfessionals(currentPage())"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        } @else {
+          @if (professionals().length === 0) {
+            <p>Nenhum profissional disponível nesta página.</p>
+          } @else {
+            <ul class="professional-list">
+              @for (professional of professionals(); track professional.id) {
+                <li>
+                  <div>
+                    <strong>{{ professional.fullName }}</strong>
+                    <small>{{ roleLabel(professional.role) }}</small>
+                    <small>{{ professional.email }}</small>
+
+                    @if (isAlreadyLinked(professional.id)) {
+                      <small>Já possui vínculo ativo</small>
+                    }
+                  </div>
+
+                  <button
+                    type="button"
+                    class="secondary-button"
+                    [disabled]="
+                      saving() || isAlreadyLinked(professional.id)
+                    "
+                    [attr.aria-pressed]="
+                      selectedProfessional()?.id === professional.id
+                    "
+                    [attr.aria-label]="
+                      'Selecionar profissional ' + professional.fullName
+                    "
+                    (click)="selectProfessional(professional)"
+                  >
+                    {{
+                      selectedProfessional()?.id === professional.id
+                        ? 'Selecionado'
+                        : 'Selecionar'
+                    }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (totalPages() > 1) {
+            <nav class="pagination" aria-label="Páginas de profissionais">
+              <button
+                type="button"
+                class="secondary-button"
+                [disabled]="currentPage() === 0 || saving()"
+                (click)="loadProfessionals(currentPage() - 1)"
+              >
+                Anterior
+              </button>
+
+              <span>
+                Página {{ currentPage() + 1 }} de {{ totalPages() }}
+              </span>
+
+              <button
+                type="button"
+                class="secondary-button"
+                [disabled]="
+                  currentPage() + 1 >= totalPages() || saving()
+                "
+                (click)="loadProfessionals(currentPage() + 1)"
+              >
+                Próxima
+              </button>
+            </nav>
+          }
+        }
+      </section>
+
+      <form class="card" [formGroup]="form" (ngSubmit)="save()">
+        <h2>2. Informe a data de início</h2>
+
+        <label for="startedOn">Início do acompanhamento *</label>
+
+        <input
+          id="startedOn"
+          type="date"
+          formControlName="startedOn"
+          [max]="todayUtc"
+          [readOnly]="saving()"
+          required
+          aria-describedby="startedOn-help"
+        >
+
+        <p id="startedOn-help" class="hint">
+          A data não pode estar no futuro. O sistema utiliza a data UTC.
+        </p>
+
+        @if (form.controls.startedOn.touched &&
+        form.controls.startedOn.invalid) {
+          <p class="error-text" role="alert">
+            Informe uma data válida que não esteja no futuro.
+          </p>
+        }
+
+        <p class="hint">
+          O acesso às informações também depende dos consentimentos necessários.
+        </p>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="saving() || !selectedProfessional()"
+          >
+            {{ saving() ? 'Salvando...' : 'Salvar vínculo' }}
+          </button>
+        </div>
+      </form>
+    }
+  }
+</section>

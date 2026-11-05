@@ -1,0 +1,75 @@
+<div
+  class="app-shell"
+  [class.menu-open]="menuOpen()"
+>
+  <header class="topbar">
+    <button
+      type="button"
+      class="menu-button"
+      aria-label="Abrir ou fechar menu"
+      aria-controls="main-navigation"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="toggleMenu()"
+    >
+      ☰
+    </button>
+
+    <a
+      class="brand"
+      routerLink="/dashboard"
+      (click)="closeMenu()"
+    >
+      ConectaTEA
+    </a>
+
+    <div class="user-summary">
+      <div class="user-information">
+        <strong>{{ userEmail }}</strong>
+        <span>{{ roleLabel }}</span>
+      </div>
+
+      <button
+        type="button"
+        class="logout-button"
+        (click)="logout()"
+      >
+        Sair
+      </button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <nav
+      id="main-navigation"
+      aria-label="Navegação principal"
+      class="navigation"
+    >
+      @for (item of access.navigation; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{
+            exact: item.path === '/dashboard'
+          }"
+          (click)="closeMenu()"
+        >
+          <span aria-hidden="true">{{ item.symbol }}</span>
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+  </aside>
+
+  @if (menuOpen()) {
+    <button
+      type="button"
+      class="backdrop"
+      aria-label="Fechar menu"
+      (click)="closeMenu()"
+    ></button>
+  }
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

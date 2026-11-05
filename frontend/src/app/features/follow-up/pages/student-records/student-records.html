@@ -1,0 +1,354 @@
+<section class="management-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Acompanhamento</p>
+      <h1>Observações e relatórios</h1>
+
+      @if (student(); as currentStudent) {
+        <p>{{ currentStudent.fullName }}</p>
+      }
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="busy()"
+        (click)="loadPage(0)"
+      >
+        Atualizar registros
+      </button>
+
+      <a
+        class="secondary-button"
+        [routerLink]="
+          studentId()
+            ? ['/my-students', studentId()]
+            : ['/my-students']
+        "
+      >
+        Voltar ao acompanhamento
+      </a>
+    </div>
+  </header>
+
+  @if (successMessage()) {
+    <div class="message success" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="message" role="status">
+      Carregando registros...
+    </div>
+  } @else if (pageError()) {
+    <div class="message error" role="alert">
+      <p>{{ pageError() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="busy()"
+        (click)="loadPage(0)"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (student()) {
+    <section class="card" aria-labelledby="new-observation-title">
+      <h2 id="new-observation-title">Registrar observação</h2>
+
+      @if (createError()) {
+        <p class="error-text" role="alert">
+          {{ createError() }}
+        </p>
+      }
+
+      <form
+        [formGroup]="observationForm"
+        (ngSubmit)="createObservation()"
+        [attr.aria-busy]="saving()"
+      >
+        <fieldset [disabled]="busy()">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="observationTitle">Título</label>
+
+              <input
+                id="observationTitle"
+                formControlName="title"
+                maxlength="120"
+                required
+              >
+
+              @if (
+                observationForm.controls.title.touched &&
+                observationForm.controls.title.invalid
+                ) {
+                <small>Informe um título de até 120 caracteres.</small>
+              }
+            </div>
+
+            <div class="form-field">
+              <label for="occurredAt">Data e horário da ocorrência</label>
+
+              <input
+                id="occurredAt"
+                type="text"
+                formControlName="occurredAt"
+                placeholder="dd/mm/aaaa hh:mm"
+                maxlength="16"
+                autocomplete="off"
+                aria-describedby="occurred-at-help"
+                required
+              >
+
+              <span id="occurred-at-help" class="help-text">
+                Exemplo: 02/11/2026 14:30. Use o horário local.
+              </span>
+
+              @if (
+                observationForm.controls.occurredAt.touched &&
+                observationForm.controls.occurredAt.invalid
+                ) {
+                <small>
+                  Informe uma data válida no formato dd/mm/aaaa hh:mm,
+                  que não esteja no futuro.
+                </small>
+              }
+            </div>
+
+            <div class="form-field full-width">
+              <label for="observationContent">Descrição</label>
+
+              <textarea
+                id="observationContent"
+                formControlName="content"
+                rows="6"
+                maxlength="5000"
+                required
+              ></textarea>
+
+              <span class="help-text">
+                {{ observationForm.controls.content.value.length }}/5000
+                caracteres
+              </span>
+
+              @if (
+                observationForm.controls.content.touched &&
+                observationForm.controls.content.invalid
+                ) {
+                <small>
+                  Informe a descrição, com até 5.000 caracteres.
+                </small>
+              }
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="busy()"
+          >
+            {{ saving() ? 'Registrando...' : 'Registrar observação' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" aria-labelledby="observations-title">
+      <h2 id="observations-title">Observações registradas</h2>
+
+      @if (observations().length === 0) {
+        <p>Nenhuma observação disponível nesta página.</p>
+      } @else {
+        @for (observation of observations(); track observation.id) {
+          <article class="record">
+            <h3>{{ observation.title }}</h3>
+
+            <p class="help-text">
+              {{ observation.authorName }} ·
+              {{ observation.occurredAt | date:'dd/MM/yyyy HH:mm' }}
+            </p>
+
+            <p class="help-text">
+              {{ purposeLabel(observation.purpose) }}
+            </p>
+
+            <p class="record-content">{{ observation.content }}</p>
+          </article>
+        }
+      }
+
+      @if (totalPages() > 0) {
+        <footer class="pagination">
+          <button
+            type="button"
+            class="secondary-button"
+            [disabled]="currentPage() === 0 || busy()"
+            (click)="loadPage(currentPage() - 1)"
+          >
+            Anterior
+          </button>
+
+          <span>
+            Página {{ currentPage() + 1 }} de {{ totalPages() }}
+            · {{ totalElements() }} registros
+          </span>
+
+          <button
+            type="button"
+            class="secondary-button"
+            [disabled]="
+              currentPage() + 1 >= totalPages() || busy()
+            "
+            (click)="loadPage(currentPage() + 1)"
+          >
+            Próxima
+          </button>
+        </footer>
+      }
+    </section>
+
+    <section class="card" aria-labelledby="report-title">
+      <h2 id="report-title">Gerar relatório</h2>
+
+      <p class="help-text">
+        Selecione um período de até 366 dias.
+        O horário inicial é incluído e o horário final não é incluído.
+        As datas e os horários são apresentados no horário local.
+      </p>
+
+      <p class="help-text">
+        Preencha as datas no formato dd/mm/aaaa hh:mm.
+        Exemplo: 02/11/2026 14:30.
+      </p>
+
+      <p class="help-text">
+        A geração exige consentimento válido para geração de relatórios.
+        O limite é de 500 observações por relatório.
+      </p>
+
+      @if (reportError()) {
+        <p class="error-text" role="alert">
+          {{ reportError() }}
+        </p>
+      }
+
+      <form
+        [formGroup]="reportForm"
+        (ngSubmit)="generateReport()"
+        [attr.aria-busy]="generating()"
+      >
+        <fieldset [disabled]="busy()">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="reportFrom">Início do período</label>
+
+              <input
+                id="reportFrom"
+                type="text"
+                formControlName="from"
+                placeholder="dd/mm/aaaa hh:mm"
+                maxlength="16"
+                autocomplete="off"
+                required
+              >
+            </div>
+
+            <div class="form-field">
+              <label for="reportTo">Fim do período — não incluído</label>
+
+              <input
+                id="reportTo"
+                type="text"
+                formControlName="to"
+                placeholder="dd/mm/aaaa hh:mm"
+                maxlength="16"
+                autocomplete="off"
+                required
+              >
+            </div>
+          </div>
+
+          @if (
+            (reportForm.touched || reportForm.dirty) &&
+            reportForm.invalid
+            ) {
+            <p class="error-text">
+              Informe as datas no formato dd/mm/aaaa hh:mm,
+              com início anterior ao fim
+              e duração máxima de 366 dias.
+            </p>
+          }
+        </fieldset>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="secondary-button"
+            [disabled]="busy()"
+          >
+            {{ generating() ? 'Processando...' : 'Visualizar relatório' }}
+          </button>
+
+          <button
+            type="button"
+            class="primary-button"
+            [disabled]="busy()"
+            (click)="generateReport(true)"
+          >
+            Baixar PDF
+          </button>
+        </div>
+      </form>
+
+      @if (report(); as currentReport) {
+        <section class="report-preview" aria-label="Relatório gerado">
+          <h3>Relatório de {{ currentReport.student.fullName }}</h3>
+
+          <p>
+            Gerado por {{ currentReport.generatedBy.fullName }},
+            em {{ currentReport.generatedAt | date:'dd/MM/yyyy HH:mm' }}.
+          </p>
+
+          <p>
+            Período:
+            {{ currentReport.from | date:'dd/MM/yyyy HH:mm' }}
+            até
+            {{ currentReport.to | date:'dd/MM/yyyy HH:mm' }}
+            — fim não incluído.
+          </p>
+
+          <p>
+            {{ purposeLabel(currentReport.purpose) }} ·
+            {{ currentReport.totalObservations }} observações
+          </p>
+
+          @if (currentReport.observations.length === 0) {
+            <p>Nenhuma observação encontrada no período.</p>
+          } @else {
+            @for (
+              observation of currentReport.observations;
+              track observation.id
+              ) {
+              <article class="record">
+                <h4>{{ observation.title }}</h4>
+
+                <p class="help-text">
+                  {{ observation.authorName }} ·
+                  {{ observation.occurredAt | date:'dd/MM/yyyy HH:mm' }}
+                </p>
+
+                <p class="record-content">{{ observation.content }}</p>
+              </article>
+            }
+          }
+        </section>
+      }
+    </section>
+  }
+</section>

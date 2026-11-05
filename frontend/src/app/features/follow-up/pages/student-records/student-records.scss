@@ -1,0 +1,45 @@
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem;
+  border: 1px solid #cbd9d5;
+  border-radius: 0.5rem;
+  font: inherit;
+  resize: vertical;
+
+  &:focus-visible {
+    outline: 2px solid #176b5d;
+    outline-offset: 3px;
+  }
+}
+
+.record,
+.report-preview {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dbe5e2;
+}
+
+.record h3,
+.record h4 {
+  margin: 0 0 0.5rem;
+}
+
+.record-content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

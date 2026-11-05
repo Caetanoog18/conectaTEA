@@ -1,0 +1,171 @@
+.link-page {
+  max-width: 960px;
+  margin: 0 auto;
+  color: #294b45;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+h1,
+h2 {
+  color: #173f39;
+}
+
+h1 {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 2rem;
+}
+
+h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #176b5d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.card,
+.message {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #dbe5e2;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.error {
+  border-color: #f5b7b1;
+  background: #fff1f0;
+  color: #9f231b;
+}
+
+.candidate-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #dbe5e2;
+  }
+
+  small {
+    display: block;
+    margin-top: 0.25rem;
+    color: #637773;
+  }
+}
+
+.selection {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: #edf8f1;
+}
+
+fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+
+  select {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.5rem;
+    border: 1px solid #cbd9d5;
+    border-radius: 0.5rem;
+    background: #fff;
+    font: inherit;
+  }
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.hint {
+  color: #637773;
+  font-size: 0.875rem;
+}
+
+.form-actions,
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #176b5d;
+  border-radius: 0.5rem;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: #176b5d;
+  color: #fff;
+}
+
+.secondary-button {
+  background: #fff;
+  color: #176b5d;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+button,
+a,
+select,
+input {
+  &:focus-visible {
+    outline: 2px solid #176b5d;
+    outline-offset: 3px;
+  }
+}
+
+@media (max-width: 700px) {
+  .page-header,
+  .candidate-list li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

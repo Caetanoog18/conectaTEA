@@ -1,0 +1,253 @@
+<section class="management-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Acompanhamento</p>
+      <h1>Laudos médicos</h1>
+
+      @if (student(); as currentStudent) {
+        <p>{{ currentStudent.fullName }}</p>
+      }
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="busy()"
+        (click)="loadPage(0)"
+      >
+        Atualizar laudos
+      </button>
+
+      <a
+        class="secondary-button"
+        [routerLink]="
+          studentId()
+            ? ['/my-students', studentId()]
+            : ['/my-students']
+        "
+      >
+        Voltar ao acompanhamento
+      </a>
+    </div>
+  </header>
+
+  @if (successMessage()) {
+    <div class="message success" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (actionError()) {
+    <div class="message error" role="alert">
+      {{ actionError() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="message" role="status">
+      Carregando laudos...
+    </div>
+  } @else if (pageError()) {
+    <div class="message error" role="alert">
+      <p>{{ pageError() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="loadPage(0)"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (student()) {
+    @if (canUpload) {
+      <section class="card" aria-labelledby="upload-title">
+        <h2 id="upload-title">Enviar laudo médico</h2>
+
+        <p class="help-text">
+          Envie um PDF de até 10 MiB, sem proteção por senha.
+        </p>
+
+        <form
+          [formGroup]="form"
+          (ngSubmit)="upload()"
+          [attr.aria-busy]="uploading()"
+        >
+          <fieldset [disabled]="busy()">
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="documentTitle">Título</label>
+
+                <input
+                  id="documentTitle"
+                  formControlName="title"
+                  maxlength="120"
+                  required
+                >
+
+                @if (
+                  form.controls.title.touched &&
+                  form.controls.title.invalid
+                  ) {
+                  <small>
+                    Informe um título de até 120 caracteres.
+                  </small>
+                }
+              </div>
+
+              <div class="form-field">
+                <label for="issuedOn">Data de emissão</label>
+
+                <input
+                  id="issuedOn"
+                  type="text"
+                  formControlName="issuedOn"
+                  placeholder="dd/mm/aaaa"
+                  maxlength="10"
+                  autocomplete="off"
+                  aria-describedby="issued-on-help"
+                  required
+                >
+
+                <span class="help-text" id="issued-on-help">
+                  Exemplo: 03/11/2026.
+                </span>
+
+                @if (
+                  form.controls.issuedOn.touched &&
+                  form.controls.issuedOn.invalid
+                  ) {
+                  <small>
+                    Informe uma data válida no formato dd/mm/aaaa,
+                    sem data futura.
+                  </small>
+                }
+              </div>
+
+              <div class="form-field full-width">
+                <label for="documentFile">Arquivo PDF</label>
+
+                <input
+                  #fileInput
+                  id="documentFile"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  (change)="selectFile($event)"
+                >
+
+                @if (file(); as selectedFile) {
+                  <span class="help-text">
+                    {{ selectedFile.name }}
+                  </span>
+                }
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="primary-button"
+              [disabled]="busy()"
+            >
+              {{ uploading() ? 'Enviando...' : 'Enviar laudo' }}
+            </button>
+          </div>
+        </form>
+      </section>
+    }
+
+    <section class="card" aria-labelledby="documents-title">
+      <h2 id="documents-title">Laudos disponíveis</h2>
+
+      @if (documents().length === 0) {
+        <p>Nenhum laudo disponível nesta página.</p>
+      } @else {
+        <div class="table-container">
+          <table>
+            <thead>
+            <tr>
+              <th scope="col">Título</th>
+              <th scope="col">Emissão</th>
+              <th scope="col">Enviado por</th>
+              <th scope="col">Envio</th>
+              <th scope="col">Tamanho</th>
+              <th scope="col">Ações</th>
+            </tr>
+            </thead>
+
+            <tbody>
+              @for (document of documents(); track document.id) {
+                <tr>
+                  <td>{{ document.title }}</td>
+
+                  <td>
+                    {{ document.issuedOn | date:'dd/MM/yyyy':'UTC' }}
+                  </td>
+
+                  <td>{{ document.uploadedByName }}</td>
+
+                  <td>
+                    {{ document.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                  </td>
+
+                  <td>
+                    {{ document.sizeBytes / 1024 | number:'1.0-0' }} KiB
+                  </td>
+
+                  <td>
+                    <button
+                      type="button"
+                      class="secondary-button"
+                      [disabled]="busy()"
+                      [attr.aria-label]="'Baixar laudo ' + document.title"
+                      (click)="downloadDocument(document)"
+                    >
+                      {{
+                        downloadingId() === document.id
+                          ? 'Baixando...'
+                          : 'Baixar PDF'
+                      }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (totalPages() > 0) {
+        <footer class="pagination">
+          <button
+            type="button"
+            class="secondary-button"
+            [disabled]="busy() || currentPage() === 0"
+            (click)="loadPage(currentPage() - 1)"
+          >
+            Anterior
+          </button>
+
+          <span>
+            Página {{ currentPage() + 1 }}
+            de {{ totalPages() }}
+            · {{ totalElements() }} laudos
+          </span>
+
+          <button
+            type="button"
+            class="secondary-button"
+            [disabled]="
+              busy() ||
+              currentPage() + 1 >= totalPages()
+            "
+            (click)="loadPage(currentPage() + 1)"
+          >
+            Próxima
+          </button>
+        </footer>
+      }
+    </section>
+  }
+</section>

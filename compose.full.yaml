@@ -1,0 +1,54 @@
+name: conectatea-final
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: conectatea
+      POSTGRES_USER: conectatea
+      POSTGRES_PASSWORD: ${FINAL_DB_PASSWORD:?Defina FINAL_DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U conectatea -d conectatea"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/conectatea
+      SPRING_DATASOURCE_USERNAME: conectatea
+      SPRING_DATASOURCE_PASSWORD: ${FINAL_DB_PASSWORD:?Defina FINAL_DB_PASSWORD}
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+      JWT_SECRET: ${FINAL_JWT_SECRET:?Defina FINAL_JWT_SECRET}
+      INITIAL_ADMIN_NAME: ${FINAL_ADMIN_NAME:-Administrador de teste}
+      INITIAL_ADMIN_EMAIL: ${FINAL_ADMIN_EMAIL:?Defina FINAL_ADMIN_EMAIL}
+      INITIAL_ADMIN_PASSWORD: ${FINAL_ADMIN_PASSWORD:?Defina FINAL_ADMIN_PASSWORD}
+      INITIAL_ADMIN_CPF: ${FINAL_ADMIN_CPF:?Defina FINAL_ADMIN_CPF}
+      CORS_ALLOWED_ORIGINS: http://localhost:${FINAL_WEB_PORT:-8088}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      start_period: 40s
+      retries: 18
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:${FINAL_WEB_PORT:-8088}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

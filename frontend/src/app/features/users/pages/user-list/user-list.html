@@ -1,0 +1,174 @@
+<section class="management-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Administração</p>
+      <h1>Usuários</h1>
+      <p>{{ totalElements() }} contas cadastradas.</p>
+    </div>
+
+    <a routerLink="/users/new" class="primary-button">
+      Novo usuário
+    </a>
+  </header>
+
+  @if (successMessage()) {
+    <div class="message success" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (selectedUser(); as user) {
+    <section
+      class="confirmation"
+      aria-labelledby="status-title"
+      [attr.aria-busy]="updatingStatus()"
+    >
+      <h2 id="status-title">
+        {{ user.active ? 'Desativar usuário' : 'Ativar usuário' }}
+      </h2>
+
+      <p>
+        Deseja {{ user.active ? 'desativar' : 'ativar' }}
+        a conta de <strong>{{ user.fullName }}</strong>?
+      </p>
+
+      <p>O cadastro e seu histórico serão preservados.</p>
+
+      @if (actionErrorMessage()) {
+        <p class="error-text" role="alert">
+          {{ actionErrorMessage() }}
+        </p>
+      }
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="secondary-button"
+          [disabled]="updatingStatus()"
+          (click)="cancelStatusChange()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="updatingStatus()"
+          (click)="confirmStatusChange()"
+        >
+          {{
+            updatingStatus()
+              ? 'Salvando...'
+              : user.active
+                ? 'Confirmar desativação'
+                : 'Confirmar ativação'
+          }}
+        </button>
+      </div>
+    </section>
+  }
+
+  @if (loading()) {
+    <div class="message" role="status">
+      Carregando usuários...
+    </div>
+  } @else if (errorMessage()) {
+    <div class="message error" role="alert">
+      <p>{{ errorMessage() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="loadPage(currentPage())"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (users().length === 0) {
+    <div class="message">Nenhum usuário encontrado.</div>
+  } @else {
+    <div class="table-container">
+      <table>
+        <thead>
+        <tr>
+          <th scope="col">Nome</th>
+          <th scope="col">E-mail</th>
+          <th scope="col">Perfil</th>
+          <th scope="col">Status</th>
+          <th scope="col">Ações</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td>{{ user.fullName }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ roleLabel(user.role) }}</td>
+
+              <td>
+                <span
+                  class="status"
+                  [class.inactive]="!user.active"
+                >
+                  {{ user.active ? 'Ativo' : 'Inativo' }}
+                </span>
+              </td>
+
+              <td>
+                @if (isCurrentUser(user)) {
+                  <span>Sua conta</span>
+                } @else {
+                  <button
+                    type="button"
+                    class="secondary-button"
+                    [disabled]="updatingStatus()"
+                    [attr.aria-label]="
+                      (user.active ? 'Desativar ' : 'Ativar ') +
+                      user.fullName
+                    "
+                    (click)="requestStatusChange(user)"
+                  >
+                    {{ user.active ? 'Desativar' : 'Ativar' }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pagination">
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="
+          currentPage() === 0 ||
+          loading() ||
+          updatingStatus()
+        "
+        (click)="loadPage(currentPage() - 1)"
+      >
+        Anterior
+      </button>
+
+      <span>
+        Página {{ currentPage() + 1 }} de {{ totalPages() }}
+      </span>
+
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="
+          currentPage() + 1 >= totalPages() ||
+          loading() ||
+          updatingStatus()
+        "
+        (click)="loadPage(currentPage() + 1)"
+      >
+        Próxima
+      </button>
+    </footer>
+  }
+</section>

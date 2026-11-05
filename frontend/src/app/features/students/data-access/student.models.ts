@@ -1,0 +1,25 @@
+export interface Student {
+  id: string;
+  fullName: string;
+  preferredName: string | null;
+  birthDate: string;
+  enrollmentNumber: string;
+  schoolYear: number;
+  gradeLevel: string;
+  className: string;
+  cpf: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StudentRequest {
+  fullName: string;
+  preferredName: string | null;
+  birthDate: string;
+  enrollmentNumber: string;
+  schoolYear: number;
+  gradeLevel: string;
+  className: string;
+  cpf: string;
+}

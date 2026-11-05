@@ -1,0 +1,163 @@
+<section class="management-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Acompanhamento</p>
+      <h1>Perfil de acompanhamento</h1>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="loading()"
+        (click)="refresh()"
+      >
+        Atualizar
+      </button>
+
+      <a routerLink="/my-students" class="secondary-button">
+        Voltar aos estudantes
+      </a>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="message" role="status">
+      Carregando acompanhamento...
+    </div>
+  } @else if (errorMessage()) {
+    <div class="message error" role="alert">
+      <p>{{ errorMessage() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="refresh()"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (student(); as currentStudent) {
+    <div class="header-actions records-access">
+      <a
+        class="primary-button"
+        [routerLink]="[
+          '/my-students',
+          currentStudent.id,
+          'records'
+        ]"
+      >
+        Observações e relatórios
+      </a>
+
+      <a
+        class="secondary-button"
+        [routerLink]="[
+          '/my-students',
+          currentStudent.id,
+          'documents'
+        ]"
+      >
+        Laudos médicos
+      </a>
+
+      <a
+        class="secondary-button"
+        [routerLink]="[
+          '/my-students',
+          currentStudent.id,
+          'timeline'
+        ]"
+      >
+        Linha do tempo
+      </a>
+    </div>
+
+    <section class="card" aria-labelledby="student-name">
+      <h2 id="student-name">
+        {{ currentStudent.fullName }}
+      </h2>
+
+      @if (currentStudent.preferredName) {
+        <p>
+          Nome preferido: {{ currentStudent.preferredName }}
+        </p>
+      }
+
+      <dl class="student-data">
+        <div>
+          <dt>Matrícula</dt>
+          <dd>{{ currentStudent.enrollmentNumber }}</dd>
+        </div>
+
+        <div>
+          <dt>Nascimento</dt>
+          <dd>
+            {{
+              currentStudent.birthDate
+                | date:'dd/MM/yyyy':'UTC'
+            }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>Ano letivo</dt>
+          <dd>{{ currentStudent.schoolYear }}</dd>
+        </div>
+
+        <div>
+          <dt>Ano/Série</dt>
+          <dd>{{ currentStudent.gradeLevel }}</dd>
+        </div>
+
+        <div>
+          <dt>Turma</dt>
+          <dd>{{ currentStudent.className }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="card" aria-labelledby="guardians-title">
+      <h2 id="guardians-title">
+        Contatos dos responsáveis legais
+      </h2>
+
+      @if (guardians().length === 0) {
+        <p>
+          Nenhum contato de responsável legal disponível
+          para esta consulta.
+        </p>
+      } @else {
+        <div class="contact-grid">
+          @for (guardian of guardians(); track guardian.guardianId) {
+            <article class="contact-card">
+              <h3>{{ guardian.fullName }}</h3>
+
+              <p>
+                {{ relationshipLabel(guardian.relationship) }}
+              </p>
+
+              @if (guardian.primaryContact) {
+                <span class="status">Contato principal</span>
+              }
+
+              <dl>
+                <div>
+                  <dt>Telefone</dt>
+                  <dd>{{ guardian.phone }}</dd>
+                </div>
+
+                <div>
+                  <dt>E-mail</dt>
+                  <dd>
+                    {{ guardian.email || 'Não informado' }}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+</section>

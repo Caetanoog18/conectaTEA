@@ -33,6 +33,7 @@ describe('AccessService', () => {
       '/students',
       '/guardians',
       '/users',
+      '/audit-events',
       '/institution'
     ]);
   });

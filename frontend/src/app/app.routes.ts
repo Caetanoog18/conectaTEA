@@ -178,6 +178,26 @@ export const routes: Routes = [
             ).then(component => component.FollowUpDetail)
       },
       {
+        path: 'my-students/:studentId/timeline',
+        data: {
+          ...professionalAccess,
+          historyMode: 'timeline'
+        },
+        loadComponent: () =>
+          import('./features/history/pages/history-page/history-page')
+            .then(component => component.HistoryPage)
+      },
+      {
+        path: 'audit-events',
+        data: {
+          ...administratorAccess,
+          historyMode: 'audit'
+        },
+        loadComponent: () =>
+          import('./features/history/pages/history-page/history-page')
+            .then(component => component.HistoryPage)
+      },
+      {
         path: 'my-students',
         data: professionalAccess,
         loadComponent: () =>

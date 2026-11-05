@@ -47,12 +47,28 @@ describe('Application route permissions', () => {
     expect(deniedRoute?.data?.['roles']).toBeUndefined();
   });
 
+  it('should restrict audit consultation to administrators', () => {
+    const route = children.find(item => item.path === 'audit-events');
+
+    expect(route?.data?.['roles']).toEqual(ADMIN_ROLES);
+    expect(route?.data?.['historyMode']).toBe('audit');
+  });
+
+  it('should open the timeline in professional mode', () => {
+    const route = children.find(item =>
+      item.path === 'my-students/:studentId/timeline'
+    );
+
+    expect(route?.data?.['roles']).toEqual(PROFESSIONAL_ROLES);
+    expect(route?.data?.['historyMode']).toBe('timeline');
+  });
+
   it('should protect professional follow-up routes', () => {
     const professionalRoutes = children.filter(route =>
       route.path?.startsWith('my-students')
     );
 
-    expect(professionalRoutes).toHaveLength(4);
+    expect(professionalRoutes).toHaveLength(5);
 
     for (const route of professionalRoutes) {
       expect(route.data?.['roles']).toEqual(PROFESSIONAL_ROLES);

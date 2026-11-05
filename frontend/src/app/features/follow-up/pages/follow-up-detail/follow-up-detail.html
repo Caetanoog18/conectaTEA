@@ -60,6 +60,17 @@
       >
         Laudos médicos
       </a>
+
+      <a
+        class="secondary-button"
+        [routerLink]="[
+          '/my-students',
+          currentStudent.id,
+          'timeline'
+        ]"
+      >
+        Linha do tempo
+      </a>
     </div>
 
     <section class="card" aria-labelledby="student-name">

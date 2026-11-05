@@ -94,6 +94,13 @@ export class AccessService {
           'Cadastre contas e gerencie sua ativação.',
         symbol: '♙'
       });
+
+      items.push({
+        path: '/audit-events',
+        label: 'Auditoria',
+        description: 'Consulte operações registradas e seus resultados.',
+        symbol: '≡'
+      });
     }
 
     if (this.isProfessional()) {

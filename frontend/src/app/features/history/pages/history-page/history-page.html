@@ -1,0 +1,191 @@
+<section class="history-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">
+        {{ isAudit ? 'Administração' : 'Acompanhamento' }}
+      </p>
+
+      <h1>{{ isAudit ? 'Auditoria' : 'Linha do tempo' }}</h1>
+
+      <p>
+        {{
+          isAudit
+            ? 'Consulte as operações registradas e seus resultados.'
+            : 'Consulte as observações do estudante, da mais recente para a mais antiga.'
+        }}
+      </p>
+    </div>
+
+    @if (!isAudit && studentId()) {
+      <a [routerLink]="['/my-students', studentId()]">
+        Voltar ao acompanhamento
+      </a>
+    }
+  </header>
+
+  <form class="card" [formGroup]="form" (ngSubmit)="applyFilters()">
+    <h2>Filtros</h2>
+    <p>
+      Use o horário local no formato dd/mm/aaaa hh:mm.
+      O início é incluído e o fim é excluído.
+    </p>
+
+    <div class="fields">
+      <label>
+        Início do período
+        <input
+          type="text"
+          formControlName="from"
+          placeholder="dd/mm/aaaa hh:mm"
+          maxlength="16"
+        >
+      </label>
+
+      <label>
+        Fim do período
+        <input
+          type="text"
+          formControlName="to"
+          placeholder="dd/mm/aaaa hh:mm"
+          maxlength="16"
+        >
+      </label>
+
+      @if (isAudit) {
+        <label>
+          Ação
+          <select formControlName="action">
+            <option value="">Todas as ações</option>
+            @for (option of actions; track option[0]) {
+              <option [value]="option[0]">{{ option[1] }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Resultado
+          <select formControlName="outcome">
+            <option value="">Todos os resultados</option>
+            @for (option of outcomes; track option[0]) {
+              <option [value]="option[0]">{{ option[1] }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          ID do estudante
+          <input type="text" formControlName="studentId" placeholder="UUID">
+        </label>
+
+        <label>
+          ID do usuário que realizou a ação
+          <input type="text" formControlName="actorUserId" placeholder="UUID">
+        </label>
+
+        <label>
+          ID da requisição
+          <input type="text" formControlName="requestId" placeholder="UUID">
+        </label>
+      }
+    </div>
+
+    @if (filterError()) {
+      <p class="error" role="alert">{{ filterError() }}</p>
+    }
+
+    <div class="actions">
+      <button type="submit">Aplicar filtros</button>
+      <button type="button" (click)="resetFilters()">Limpar filtros</button>
+    </div>
+  </form>
+
+  @if (loading()) {
+    <p class="card" role="status">Carregando eventos...</p>
+  } @else if (error()) {
+    <div class="card">
+      <p class="error" role="alert">{{ error() }}</p>
+      <button type="button" (click)="retry()">Tentar novamente</button>
+    </div>
+  } @else {
+    <p role="status">
+      {{ totalElements() }}
+      {{ totalElements() === 1 ? 'evento encontrado' : 'eventos encontrados' }}
+    </p>
+
+    @if (isAudit) {
+      @for (event of audit(); track event.id) {
+        <article class="card">
+          <h2>{{ actionLabels[event.action] || event.action }}</h2>
+
+          <dl>
+            <dt>Data e horário</dt>
+            <dd>{{ event.occurredAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+
+            <dt>Resultado</dt>
+            <dd>{{ outcomeLabels[event.outcome] || event.outcome }}</dd>
+
+            <dt>ID do usuário</dt>
+            <dd>{{ event.actorUserId || 'Não identificado' }}</dd>
+
+            <dt>ID do estudante</dt>
+            <dd>{{ event.studentId || 'Não se aplica' }}</dd>
+
+            <dt>ID do recurso</dt>
+            <dd>{{ event.resourceId || 'Não se aplica' }}</dd>
+
+            <dt>ID da requisição</dt>
+            <dd>{{ event.requestId }}</dd>
+          </dl>
+        </article>
+      } @empty {
+        <p class="card">Nenhum evento de auditoria nesta página.</p>
+      }
+    } @else {
+      @for (event of timeline(); track event.id) {
+        <article class="card">
+          <p class="eyebrow">Observação</p>
+          <h2>{{ event.title }}</h2>
+          <p class="observation">{{ event.content }}</p>
+
+          <dl>
+            <dt>Ocorrência</dt>
+            <dd>{{ event.occurredAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+
+            <dt>Registrada em</dt>
+            <dd>{{ event.recordedAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+
+            <dt>Profissional</dt>
+            <dd>{{ event.authorName }}</dd>
+
+            <dt>Finalidade</dt>
+            <dd>{{ purposeLabels[event.purpose] || event.purpose }}</dd>
+          </dl>
+        </article>
+      } @empty {
+        <p class="card">Nenhuma observação disponível nesta página.</p>
+      }
+    }
+
+    @if (totalPages() > 1 || page() > 0) {
+      <nav class="actions" aria-label="Paginação dos eventos">
+        <button
+          type="button"
+          [disabled]="page() === 0"
+          (click)="changePage(page() - 1)"
+        >
+          Anterior
+        </button>
+
+        <span>Página {{ page() + 1 }}</span>
+
+        <button
+          type="button"
+          [disabled]="page() + 1 >= totalPages()"
+          (click)="changePage(page() + 1)"
+        >
+          Próxima
+        </button>
+      </nav>
+    }
+  }
+</section>

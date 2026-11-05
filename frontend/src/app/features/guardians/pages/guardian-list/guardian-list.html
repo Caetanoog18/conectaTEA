@@ -1,0 +1,209 @@
+<section class="guardian-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Cadastros</p>
+      <h1>Responsáveis</h1>
+
+      <p>
+        Consulte os responsáveis cadastrados na instituição.
+      </p>
+    </div>
+
+    <span class="total">
+      {{ totalElements() }}
+      {{ totalElements() === 1 ? 'responsável' : 'responsáveis' }}
+    </span>
+
+    <a routerLink="/guardians/new" class="primary-button">
+      Novo responsável
+    </a>
+  </header>
+  @if (successMessage()) {
+    <div class="message success" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (selectedGuardian(); as guardian) {
+    <section
+      class="status-confirmation"
+      aria-labelledby="status-confirmation-title"
+      [attr.aria-busy]="updatingStatus()"
+    >
+      <h2 id="status-confirmation-title">
+        {{ guardian.active ? 'Desativar responsável' : 'Ativar responsável' }}
+      </h2>
+
+      <p>
+        Deseja
+        {{ guardian.active ? 'desativar' : 'ativar' }}
+        o cadastro de
+        <strong>{{ guardian.fullName }}</strong>?
+      </p>
+
+      @if (guardian.active) {
+        <p>O cadastro e seu histórico serão preservados.</p>
+      }
+
+      @if (statusErrorMessage()) {
+        <p class="confirmation-error" role="alert">
+          {{ statusErrorMessage() }}
+        </p>
+      }
+
+      <div class="confirmation-actions">
+        <button
+          type="button"
+          class="secondary-button"
+          [disabled]="updatingStatus()"
+          (click)="cancelStatusChange()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="updatingStatus()"
+          (click)="confirmStatusChange()"
+        >
+          {{
+            updatingStatus()
+              ? 'Salvando...'
+              : guardian.active
+                ? 'Confirmar desativação'
+                : 'Confirmar ativação'
+          }}
+        </button>
+      </div>
+    </section>
+  }
+
+  @if (loading()) {
+    <div class="message" role="status">
+      Carregando responsáveis...
+    </div>
+  } @else if (errorMessage()) {
+    <div class="message error" role="alert">
+      <p>{{ errorMessage() }}</p>
+
+      <button
+        type="button"
+        (click)="loadPage(currentPage())"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (guardians().length === 0) {
+    <div class="message">
+      <p>Nenhum responsável cadastrado.</p>
+
+      <a routerLink="/guardians/new" class="primary-button">
+        Cadastrar primeiro responsável
+      </a>
+    </div>
+  } @else {
+    <div class="table-container">
+      <table>
+        <thead>
+        <tr>
+          <th scope="col">Nome</th>
+          <th scope="col">CPF</th>
+          <th scope="col">Contato</th>
+          <th scope="col">Acesso ao sistema</th>
+          <th scope="col">Status</th>
+          <th scope="col">Ações</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (guardian of guardians(); track guardian.id) {
+            <tr>
+              <td>
+                <strong>{{ guardian.fullName }}</strong>
+              </td>
+
+              <td>
+                {{ formatCpf(guardian.cpf) }}
+              </td>
+
+              <td>
+                <span>{{ guardian.phone }}</span>
+
+                @if (guardian.email) {
+                  <small>{{ guardian.email }}</small>
+                } @else {
+                  <small>E-mail não informado</small>
+                }
+              </td>
+
+              <td>
+                <span
+                  class="access-status"
+                  [class.linked]="guardian.userId"
+                >
+                  {{ guardian.userId ? 'Vinculado' : 'Sem acesso' }}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  class="status"
+                  [class.inactive]="!guardian.active"
+                >
+                  {{ guardian.active ? 'Ativo' : 'Inativo' }}
+                </span>
+              </td>
+
+              <td>
+                <div class="row-actions">
+                  <a
+                    class="edit-link"
+                    [routerLink]="['/guardians', guardian.id, 'edit']"
+                    [attr.aria-label]="'Editar responsável ' + guardian.fullName"
+                  >
+                    Editar
+                  </a>
+
+                  <button
+                    type="button"
+                    class="status-button"
+                    [disabled]="updatingStatus()"
+                    [attr.aria-label]=" (guardian.active ? 'Desativar responsável ' : 'Ativar responsável ')
+                    + guardian.fullName"
+                    (click)="requestStatusChange(guardian)"
+                  >
+                    {{ guardian.active ? 'Desativar' : 'Ativar' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pagination">
+      <button
+        type="button"
+        [disabled]="currentPage() === 0 || updatingStatus()"
+        (click)="previousPage()"
+      >
+        Anterior
+      </button>
+
+      <span>
+    Página {{ currentPage() + 1 }}
+        de {{ totalPages() }}
+  </span>
+
+      <button
+        type="button"
+        [disabled]="currentPage() + 1 >= totalPages() || updatingStatus()"
+        (click)="nextPage()"
+      >
+        Próxima
+      </button>
+    </footer>
+  }
+</section>

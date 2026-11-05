@@ -8,6 +8,7 @@ import com.github.caetanoog18.conectatea.identity.domain.UserRole;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -95,7 +97,8 @@ class CareTeamManagementIntegrationTest {
                         "MAT-CARETEAM-001",
                         2026,
                         "5º ano",
-                        "Turma B"
+                        "Turma B",
+                        TestCpf.next()
                 )
         );
     }
@@ -202,14 +205,10 @@ class CareTeamManagementIntegrationTest {
         mockMvc.perform(
                         post("/api/students/{studentId}/care-team", student.getId())
                                 .with(jwt()
-                                        .jwt(token -> token.subject(
-                                                professional.getEmail()))
-                                        .authorities(
-                                                new SimpleGrantedAuthority("ROLE_ADMINISTRATOR")
-                                        ))
+                                        .jwt(token -> token.subject(professional.getEmail()))
+                                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR")))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(createRequest(professional.getId(), today()))
-                )
+                                .content(createRequest(professional.getId(), today())))
                 .andExpect(status().isForbidden());
 
         assertThat(linkRepository.count()).isZero();
@@ -219,10 +218,7 @@ class CareTeamManagementIntegrationTest {
     void administratorShouldListAndFindLink() throws Exception {
         StudentProfessionalLink link = persistLink();
 
-        mockMvc.perform(
-                        get("/api/students/{studentId}/care-team", student.getId())
-                                .with(asUser(administrator))
-                )
+        mockMvc.perform(get("/api/students/{studentId}/care-team", student.getId()).with(asUser(administrator)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(link.getId().toString()))
@@ -231,8 +227,7 @@ class CareTeamManagementIntegrationTest {
         mockMvc.perform(
                 get("/api/care-team-links/{linkId}", link.getId()).with(asUser(administrator)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id")
-                        .value(link.getId().toString()))
+                .andExpect(jsonPath("$.id").value(link.getId().toString()))
                 .andExpect(jsonPath("$.active").value(true));
     }
 
@@ -242,12 +237,9 @@ class CareTeamManagementIntegrationTest {
         endLink(previousLinkId)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false))
-                .andExpect(jsonPath("$.endedOn")
-                        .value(today().toString()))
-                .andExpect(jsonPath("$.endedByUserId")
-                        .value(administrator.getId().toString()))
-                .andExpect(jsonPath("$.endReason")
-                        .value("Professional no longer provides care"));
+                .andExpect(jsonPath("$.endedOn").value(today().toString()))
+                .andExpect(jsonPath("$.endedByUserId").value(administrator.getId().toString()))
+                .andExpect(jsonPath("$.endReason").value("Professional no longer provides care"));
 
         entityManager.flush();
         entityManager.clear();
@@ -256,8 +248,7 @@ class CareTeamManagementIntegrationTest {
 
         assertThat(endedLink.isActive()).isFalse();
 
-        assertThat(
-                linkRepository.existsByStudent_IdAndProfessional_IdAndActiveTrue(
+        assertThat(linkRepository.existsByStudent_IdAndProfessional_IdAndActiveTrue(
                         student.getId(), professional.getId())).isFalse();
 
         createLink(administrator, professional.getId(), today())
@@ -268,9 +259,7 @@ class CareTeamManagementIntegrationTest {
 
         assertThat(linkRepository.findById(previousLinkId).orElseThrow().isActive()).isFalse();
 
-        mockMvc.perform(
-                        get("/api/students/{studentId}/care-team", student.getId())
-                                .with(asUser(administrator)))
+        mockMvc.perform(get("/api/students/{studentId}/care-team", student.getId()).with(asUser(administrator)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
     }
@@ -321,11 +310,9 @@ class CareTeamManagementIntegrationTest {
 
     @Test
     void missingLinkShouldReturnNotFound() throws Exception {
-        mockMvc.perform(
-                        get("/api/care-team-links/{linkId}", UUID.randomUUID()).with(asUser(administrator)))
+        mockMvc.perform(get("/api/care-team-links/{linkId}", UUID.randomUUID()).with(asUser(administrator)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.title")
-                        .value("Care team resource not found"));
+                .andExpect(jsonPath("$.title").value("Care team resource not found"));
     }
 
     @Test
@@ -380,7 +367,7 @@ class CareTeamManagementIntegrationTest {
     }
 
     private User persistUser(String fullName, String email, UserRole role) {
-        return userRepository.saveAndFlush(new User(fullName, email, "temporary-password-hash", role));
+        return userRepository.saveAndFlush(new User(fullName, email, "temporary-password-hash", role, TestCpf.next()));
     }
 
     private static String createRequest(UUID professionalId, LocalDate startedOn) {

@@ -10,6 +10,7 @@ import com.github.caetanoog18.conectatea.guardian.infrastructure.GuardianReposit
 import com.github.caetanoog18.conectatea.identity.domain.User;
 import com.github.caetanoog18.conectatea.identity.domain.UserRole;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,7 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -206,7 +208,8 @@ class GuardianManagementIntegrationTest {
                         "Maria da Silva",
                         "maria.guardian@example.com",
                         "temporary-password-hash",
-                        UserRole.LEGAL_GUARDIAN
+                        UserRole.LEGAL_GUARDIAN,
+                        "52998224725"
                 )
         );
 
@@ -229,7 +232,8 @@ class GuardianManagementIntegrationTest {
                         "Professor da Silva",
                         "teacher@example.com",
                         "temporary-password-hash",
-                        UserRole.TEACHER
+                        UserRole.TEACHER,
+                        TestCpf.next()
                 )
         );
 
@@ -277,6 +281,7 @@ class GuardianManagementIntegrationTest {
                 "(47) 99999-9999",
                 userId
         );
+
         return guardianRepository.saveAndFlush(guardian);
     }
 

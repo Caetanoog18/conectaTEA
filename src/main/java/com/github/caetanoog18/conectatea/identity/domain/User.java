@@ -1,5 +1,6 @@
 package com.github.caetanoog18.conectatea.identity.domain;
 
+import com.github.caetanoog18.conectatea.shared.domain.Cpf;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -49,14 +50,18 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(nullable = false, length = 11)
+    private String cpf;
+
     protected User() {
     }
 
-    public User(String fullName, String email, String passwordHash, UserRole role) {
+    public User(String fullName, String email, String passwordHash, UserRole role, String cpf) {
         this.fullName = fullName;
         this.email = normalizeEmail(email);
         this.passwordHash = passwordHash;
         this.role = role;
+        this.cpf = Cpf.normalize(cpf);
         this.active = true;
         this.tokenVersion = 0L;
     }
@@ -93,6 +98,10 @@ public class User {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getCpf() {
+        return cpf;
     }
 
     public void changePassword(String passwordHash) {

@@ -25,6 +25,7 @@ import com.github.caetanoog18.conectatea.observation.domain.Observation;
 import com.github.caetanoog18.conectatea.observation.infrastructure.ObservationRepository;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import com.github.caetanoog18.conectatea.timeline.application.TimelineService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +61,8 @@ import static org.mockito.Mockito.doThrow;
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @Transactional
 class AuditIntegrationTest {
@@ -340,7 +342,8 @@ class AuditIntegrationTest {
                         "Administrador Teste",
                         "admin-" + tag + "@example.com",
                         "temporary-password-hash",
-                        UserRole.ADMINISTRATOR
+                        UserRole.ADMINISTRATOR,
+                        TestCpf.next()
                 )
         );
 
@@ -349,7 +352,8 @@ class AuditIntegrationTest {
                         "Professor Teste",
                         "teacher-" + tag + "@example.com",
                         "temporary-password-hash",
-                        UserRole.TEACHER
+                        UserRole.TEACHER,
+                        TestCpf.next()
                 )
         );
 
@@ -361,14 +365,15 @@ class AuditIntegrationTest {
                         "AUD-" + tag,
                         2026,
                         "5 ano",
-                        "Turma Teste"
+                        "Turma Teste",
+                        TestCpf.next()
                 )
         );
 
         Guardian guardian = guardianRepository.saveAndFlush(
                 new Guardian(
                         "Responsavel Teste",
-                        null,
+                        TestCpf.next(),
                         "guardian-" + tag + "@example.com",
                         "00000000000",
                         null

@@ -17,7 +17,8 @@ public record StudentResponse(
         String className,
         boolean active,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String cpf
 ) {
     public static StudentResponse from(Student student) {
         return new StudentResponse(
@@ -31,7 +32,8 @@ public record StudentResponse(
                 student.getClassName(),
                 student.isActive(),
                 student.getCreatedAt(),
-                student.getUpdatedAt()
+                student.getUpdatedAt(),
+                student.getCpf()
         );
     }
 }

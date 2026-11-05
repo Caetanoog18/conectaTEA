@@ -4,6 +4,7 @@ import com.github.caetanoog18.conectatea.TestcontainersConfiguration;
 import com.github.caetanoog18.conectatea.identity.domain.User;
 import com.github.caetanoog18.conectatea.identity.domain.UserRole;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,7 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @Transactional
 class UserRepositoryIntegrationTest {
@@ -30,7 +32,8 @@ class UserRepositoryIntegrationTest {
                 "System Administrator",
                 "admin@conectatea.com",
                 "temporary-password-hash",
-                UserRole.ADMINISTRATOR
+                UserRole.ADMINISTRATOR,
+                TestCpf.next()
         );
 
         userRepository.saveAndFlush(user);

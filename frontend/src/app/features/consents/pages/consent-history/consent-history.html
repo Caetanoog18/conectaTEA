@@ -1,0 +1,270 @@
+<section class="consent-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Autorizações</p>
+      <h1>Histórico de consentimentos</h1>
+
+      <p>
+        Consulte as finalidades autorizadas, a validade
+        e o histórico deste vínculo com responsável.
+      </p>
+    </div>
+
+    <a
+      class="secondary-button"
+      [routerLink]="
+        studentId()
+          ? ['/students', studentId()]
+          : ['/students']
+      "
+    >
+      Voltar ao estudante
+    </a>
+  </header>
+
+  @if (
+    studentId() &&
+    !loading() &&
+    !errorMessage() &&
+    !revoking()
+    ) {
+    <div class="history-actions">
+      <a
+        class="secondary-button"
+        routerLink="new"
+      >
+        Registrar consentimento
+      </a>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="message success" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (selectedConsent(); as selected) {
+    <section
+      class="revocation-confirmation"
+      aria-labelledby="revocation-title"
+      [attr.aria-busy]="revoking()"
+    >
+      <h2 id="revocation-title">
+        Revogar consentimento
+      </h2>
+
+      <p>
+        Deseja revogar o consentimento de
+        <strong>{{ selected.guardianName }}</strong>,
+        referente ao termo
+        <strong>{{ selected.termsVersion }}</strong>?
+      </p>
+
+      <p>
+        As finalidades deste termo deixarão de estar autorizadas por ele.
+        O registro e o motivo da revogação permanecerão no histórico.
+      </p>
+
+      <form
+        [formGroup]="revokeForm"
+        (ngSubmit)="confirmRevocation()"
+      >
+        <fieldset [disabled]="revoking()">
+          <label for="revocationReason">
+            Motivo da revogação
+          </label>
+
+          <textarea
+            id="revocationReason"
+            formControlName="reason"
+            rows="4"
+            maxlength="500"
+            required
+            aria-describedby="revocation-reason-help"
+            [attr.aria-invalid]="
+              revokeForm.controls.reason.touched &&
+              revokeForm.controls.reason.invalid
+            "
+          ></textarea>
+
+          <small id="revocation-reason-help">
+            {{ revokeForm.controls.reason.value.length }}/500 caracteres
+          </small>
+
+          @if (
+            revokeForm.controls.reason.touched &&
+            revokeForm.controls.reason.invalid
+            ) {
+            <p class="error-text">
+              Informe um motivo com até 500 caracteres.
+              O campo não pode conter somente espaços.
+            </p>
+          }
+        </fieldset>
+
+        <div class="confirmation-actions">
+          <button
+            type="button"
+            class="secondary-button"
+            [disabled]="revoking()"
+            (click)="cancelRevocation()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="danger-button"
+            [disabled]="revoking()"
+          >
+            {{
+              revoking()
+                ? 'Revogando...'
+                : 'Confirmar revogação'
+            }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  @if (actionErrorMessage()) {
+    <div class="message error" role="alert">
+      <p>{{ actionErrorMessage() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="revoking()"
+        (click)="load()"
+      >
+        Atualizar histórico
+      </button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="message" role="status">
+      Carregando consentimentos...
+    </div>
+  } @else if (errorMessage()) {
+    <div class="message error" role="alert">
+      <p>{{ errorMessage() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="load()"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (consents().length === 0) {
+    <div class="message">
+      Nenhum consentimento registrado para este vínculo.
+    </div>
+  } @else {
+    @for (consent of consents(); track consent.id) {
+      <article class="consent-card">
+        <header class="card-header">
+          <div>
+            <h2>{{ consent.guardianName }}</h2>
+            <p>Estudante: {{ consent.studentName }}</p>
+          </div>
+
+          <span
+            class="status"
+            [class.revoked]="consent.status === 'REVOKED'"
+            [class.expired]="consent.status === 'EXPIRED'"
+          >
+            {{ statusLabel(consent.status) }}
+          </span>
+        </header>
+
+        <dl class="consent-data">
+          <div>
+            <dt>Concedido em</dt>
+            <dd>
+              {{
+                consent.grantedAt
+                  | date:'dd/MM/yyyy HH:mm':'UTC'
+              }}
+              UTC
+            </dd>
+          </div>
+
+          <div>
+            <dt>Válido até</dt>
+            <dd>
+              @if (consent.validUntil) {
+                {{
+                  consent.validUntil
+                    | date:'dd/MM/yyyy':'UTC'
+                }}
+              } @else {
+                Sem data de término
+              }
+            </dd>
+          </div>
+
+          <div>
+            <dt>Versão do termo</dt>
+            <dd>{{ consent.termsVersion }}</dd>
+          </div>
+        </dl>
+
+        <h3>Finalidades autorizadas</h3>
+
+        <ul class="purpose-list">
+          @for (purpose of consent.purposes; track purpose) {
+            <li>{{ purposeLabel(purpose) }}</li>
+          }
+        </ul>
+
+        @if (consent.status === 'REVOKED') {
+          <div class="revocation">
+            <h3>Revogação</h3>
+
+            @if (consent.revokedAt) {
+              <p>
+                Registrada em
+                {{
+                  consent.revokedAt
+                    | date:'dd/MM/yyyy HH:mm':'UTC'
+                }}
+                UTC.
+              </p>
+            }
+
+            <p class="reason">
+              {{
+                consent.revocationReason ||
+                'Motivo não informado.'
+              }}
+            </p>
+          </div>
+        }
+
+        @if (consent.status === 'ACTIVE') {
+          <div class="consent-actions">
+            <button
+              type="button"
+              class="danger-button"
+              [disabled]="revoking()"
+              [attr.aria-label]="
+                'Revogar consentimento de ' +
+                consent.guardianName +
+                ', termo ' +
+                consent.termsVersion
+              "
+              (click)="requestRevocation(consent)"
+            >
+              Revogar consentimento
+            </button>
+          </div>
+        }
+      </article>
+    }
+  }
+</section>

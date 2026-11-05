@@ -1,0 +1,239 @@
+<section class="consent-form-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Autorizações</p>
+      <h1>Registrar consentimento</h1>
+      <p>
+        Registre as finalidades autorizadas pelo responsável legal.
+      </p>
+    </div>
+
+    <a
+      class="secondary-button"
+      [routerLink]="historyLink"
+    >
+      Voltar ao histórico
+    </a>
+  </header>
+
+  @if (loading()) {
+    <div class="message" role="status">
+      Carregando vínculo e consentimentos...
+    </div>
+  } @else if (loadFailed()) {
+    <div class="message error" role="alert">
+      <p>{{ errorMessage() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="load()"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (link(); as currentLink) {
+    <section class="context-card" aria-label="Vínculo selecionado">
+      <p>
+        <strong>Estudante:</strong>
+        {{ currentLink.studentName }}
+      </p>
+
+      <p>
+        <strong>Responsável:</strong>
+        {{ currentLink.guardianName }}
+      </p>
+    </section>
+
+    @if (!currentLink.legalGuardian) {
+      <div class="message error" role="alert">
+        O consentimento só pode ser registrado para um vínculo
+        marcado como responsável legal.
+      </div>
+    } @else if (hasActiveConsent()) {
+      <div class="message" role="status">
+        <p>
+          Não é possível registrar outro termo enquanto houver
+          consentimento ativo ou um conflito pendente.
+        </p>
+
+        <a
+          class="secondary-button"
+          [routerLink]="historyLink"
+        >
+          Consultar histórico
+        </a>
+      </div>
+
+      @if (errorMessage()) {
+        <p class="error-text" role="alert">
+          {{ errorMessage() }}
+        </p>
+      }
+    } @else {
+      <p class="notice">
+        Este formulário registra uma autorização já concedida.
+        Informe somente as finalidades efetivamente autorizadas
+        e a versão do termo apresentado ao responsável.
+      </p>
+
+      @if (errorMessage()) {
+        <div class="message error" role="alert">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <form
+        class="consent-form"
+        [formGroup]="form"
+        (ngSubmit)="save()"
+        [attr.aria-busy]="saving()"
+      >
+        <fieldset [disabled]="saving()">
+          <legend>Finalidades autorizadas</legend>
+
+          <div class="purpose-options">
+            @for (purpose of purposeOptions; track purpose.value) {
+              <label class="checkbox-option">
+                <input
+                  type="checkbox"
+                  [checked]="
+                    form.controls.purposes.value.includes(purpose.value)
+                  "
+                  (change)="togglePurpose(purpose.value, $event)"
+                >
+
+                <span>{{ purpose.label }}</span>
+              </label>
+            }
+          </div>
+
+          @if (
+            form.controls.purposes.touched &&
+            form.controls.purposes.invalid
+            ) {
+            <p class="error-text">
+              Selecione pelo menos uma finalidade.
+            </p>
+          }
+
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="termsVersion">Versão do termo</label>
+
+              <input
+                id="termsVersion"
+                type="text"
+                formControlName="termsVersion"
+                maxlength="20"
+                required
+              >
+
+              @if (
+                form.controls.termsVersion.touched &&
+                form.controls.termsVersion.invalid
+                ) {
+                <small>
+                  Informe a versão do termo, com até 20 caracteres.
+                </small>
+              }
+            </div>
+
+            <div class="form-field">
+              <label for="grantedAt">
+                Data e horário da concessão
+              </label>
+
+              <input
+                id="grantedAt"
+                type="datetime-local"
+                formControlName="grantedAt"
+                required
+                aria-describedby="granted-at-help"
+              >
+
+              <span id="granted-at-help" class="help-text">
+                Use o horário local. A concessão não pode estar no futuro.
+              </span>
+
+              @if (
+                form.controls.grantedAt.touched &&
+                form.controls.grantedAt.invalid
+                ) {
+                <small>
+                  Informe uma data válida que não esteja no futuro.
+                </small>
+              }
+            </div>
+
+            <div class="form-field">
+              <label for="validUntil">
+                Válido até — opcional
+              </label>
+
+              <input
+                id="validUntil"
+                type="date"
+                formControlName="validUntil"
+                aria-describedby="valid-until-help"
+              >
+
+              <span id="valid-until-help" class="help-text">
+                Deixe vazio quando o termo não definir data final.
+                A data informada é o último dia de validade.
+              </span>
+
+              @if (
+                form.controls.validUntil.touched &&
+                form.controls.validUntil.invalid
+                ) {
+                <small>
+                  Informe uma data válida, que não esteja no passado
+                  nem seja anterior à concessão.
+                </small>
+              }
+            </div>
+          </div>
+
+          <label class="checkbox-option confirmation">
+            <input
+              type="checkbox"
+              formControlName="confirmed"
+            >
+
+            <span>
+              Confirmo que o responsável legal concedeu a autorização
+              e que os dados registrados correspondem ao termo apresentado.
+            </span>
+          </label>
+
+          @if (
+            form.controls.confirmed.touched &&
+            form.controls.confirmed.invalid
+            ) {
+            <p class="error-text">
+              Confirme a autorização antes de registrar.
+            </p>
+          }
+        </fieldset>
+
+        <div class="form-actions">
+          <a
+            class="secondary-button"
+            [routerLink]="historyLink"
+          >
+            Voltar ao histórico
+          </a>
+
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="saving()"
+          >
+            {{ saving() ? 'Registrando...' : 'Registrar consentimento' }}
+          </button>
+        </div>
+      </form>
+    }
+  }
+</section>

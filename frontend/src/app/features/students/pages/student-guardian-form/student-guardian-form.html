@@ -1,0 +1,218 @@
+<section class="link-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Rede de apoio</p>
+
+      <h1>
+        {{ editMode ? 'Editar vínculo' : 'Vincular responsável' }}
+      </h1>
+
+      @if (student(); as currentStudent) {
+        <p>{{ currentStudent.fullName }}</p>
+      }
+    </div>
+
+    <a
+      class="secondary-button"
+      [routerLink]="['/students', studentId]"
+    >
+      Voltar ao perfil
+    </a>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="message error" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <p role="status">Carregando dados...</p>
+  } @else if (!loadFailed()) {
+    @if (!editMode && !student()?.active) {
+      <div class="message">
+        Ative o estudante antes de criar um vínculo.
+      </div>
+    } @else {
+      @if (!editMode) {
+        <section class="card" aria-labelledby="selection-title">
+          <h2 id="selection-title">1. Selecione o responsável</h2>
+
+          <p>
+            O responsável precisa estar cadastrado e ativo.
+          </p>
+
+          @if (selectedGuardian(); as selected) {
+            <p class="selection" role="status">
+              Selecionado: <strong>{{ selected.fullName }}</strong>
+            </p>
+          }
+
+          @if (candidatesLoading()) {
+            <p role="status">Carregando responsáveis...</p>
+          } @else if (candidatesError()) {
+            <div role="alert">
+              <p>{{ candidatesError() }}</p>
+
+              <button
+                type="button"
+                class="secondary-button"
+                [disabled]="saving()"
+                (click)="loadCandidates(candidatesPage())"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          } @else {
+            @if (candidates().length === 0) {
+              <p>Nenhum responsável encontrado nesta página.</p>
+            } @else {
+              <ul class="candidate-list">
+                @for (guardian of candidates(); track guardian.id) {
+                  <li>
+                    <div>
+                      <strong>{{ guardian.fullName }}</strong>
+
+                      <small>
+                        {{ guardian.email || guardian.phone }}
+                      </small>
+
+                      @if (!guardian.active) {
+                        <small>Cadastro inativo</small>
+                      }
+
+                      @if (isAlreadyLinked(guardian)) {
+                        <small>Já vinculado ao estudante</small>
+                      }
+                    </div>
+
+                    <button
+                      type="button"
+                      class="secondary-button"
+                      [disabled]="
+                        !canSelect(guardian) || saving()
+                      "
+                      [attr.aria-pressed]="
+                        selectedGuardian()?.id === guardian.id
+                      "
+                      [attr.aria-label]="
+                        'Selecionar responsável ' + guardian.fullName
+                      "
+                      (click)="selectGuardian(guardian)"
+                    >
+                      {{
+                        selectedGuardian()?.id === guardian.id
+                          ? 'Selecionado'
+                          : 'Selecionar'
+                      }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+
+            @if (candidatesTotalPages() > 1) {
+              <nav class="pagination" aria-label="Páginas de responsáveis">
+                <button
+                  type="button"
+                  class="secondary-button"
+                  [disabled]="candidatesPage() === 0 || saving()"
+                  (click)="loadCandidates(candidatesPage() - 1)"
+                >
+                  Anterior
+                </button>
+
+                <span>
+                  Página {{ candidatesPage() + 1 }}
+                  de {{ candidatesTotalPages() }}
+                </span>
+
+                <button
+                  type="button"
+                  class="secondary-button"
+                  [disabled]="
+                    candidatesPage() + 1 >= candidatesTotalPages()
+                    || saving()
+                  "
+                  (click)="loadCandidates(candidatesPage() + 1)"
+                >
+                  Próxima
+                </button>
+              </nav>
+            }
+          }
+        </section>
+      }
+
+      <form
+        class="card"
+        [formGroup]="form"
+        (ngSubmit)="save()"
+      >
+        <h2>
+          {{ editMode ? 'Dados do vínculo' : '2. Defina o vínculo' }}
+        </h2>
+
+        @if (editMode) {
+          <p>
+            Responsável: <strong>{{ guardianName() }}</strong>
+          </p>
+        }
+
+        <fieldset [disabled]="saving()">
+          <div class="form-field">
+            <label for="relationship">Parentesco/Vínculo</label>
+
+            <select
+              id="relationship"
+              formControlName="relationship"
+            >
+              @for (relationship of relationships; track relationship.value) {
+                <option [value]="relationship.value">
+                  {{ relationship.label }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <label class="checkbox-field">
+            <input
+              type="checkbox"
+              formControlName="legalGuardian"
+            >
+            É responsável legal pelo estudante
+          </label>
+
+          <label class="checkbox-field">
+            <input
+              type="checkbox"
+              formControlName="primaryContact"
+            >
+            É o contato principal
+          </label>
+
+          <p class="hint">
+            Cada estudante pode ter apenas um contato principal.
+            Para trocar, primeiro retire essa marcação do vínculo atual.
+          </p>
+
+          <p class="hint">
+            Este vínculo não registra um consentimento.
+          </p>
+
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="primary-button"
+              [disabled]="
+                saving() || (!editMode && !selectedGuardian())
+              "
+            >
+              {{ saving() ? 'Salvando...' : 'Salvar vínculo' }}
+            </button>
+          </div>
+        </fieldset>
+      </form>
+    }
+  }
+</section>

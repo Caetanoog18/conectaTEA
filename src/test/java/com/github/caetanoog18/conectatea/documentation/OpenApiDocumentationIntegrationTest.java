@@ -19,7 +19,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @SpringBootTest(properties = {
         "app.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @ActiveProfiles("docs")
 @AutoConfigureMockMvc

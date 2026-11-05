@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.hibernate.validator.constraints.br.CPF;
 
 
 public record CreateUserRequest(
@@ -32,6 +33,10 @@ public record CreateUserRequest(
         String password,
 
         @NotNull(message = "Role is required")
-        UserRole role
+        UserRole role,
+
+        @NotBlank(message = "CPF is required")
+        @CPF(message = "CPF must be valid")
+        String cpf
 ) {
 }

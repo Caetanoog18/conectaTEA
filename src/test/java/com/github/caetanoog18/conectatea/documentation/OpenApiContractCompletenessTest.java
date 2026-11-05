@@ -24,7 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @ActiveProfiles("docs")
 @AutoConfigureMockMvc
@@ -64,6 +65,7 @@ class OpenApiContractCompletenessTest {
             "/api/consents/{consentId}",
             "/api/consents/{consentId}/revoke",
 
+            "/api/care-team/professionals",
             "/api/students/{studentId}/care-team",
             "/api/care-team-links/{linkId}",
             "/api/care-team-links/{linkId}/end",
@@ -76,7 +78,13 @@ class OpenApiContractCompletenessTest {
             "/api/audit-events",
 
             "/api/me/students/{studentId}/reports",
-            "/api/me/students/{studentId}/reports/pdf"
+            "/api/me/students/{studentId}/reports/pdf",
+
+            "/api/me/students",
+            "/api/me/students/{studentId}/legal-guardians",
+
+            "/api/me/students/{studentId}/medical-documents",
+            "/api/me/students/{studentId}/medical-documents/{documentId}/file"
     );
 
     private static final Set<String> EXPECTED_OPERATION_IDS = Set.of(
@@ -116,6 +124,7 @@ class OpenApiContractCompletenessTest {
             "listConsentHistory",
             "revokeConsent",
 
+            "listCareTeamProfessionals",
             "createProfessionalLink",
             "listStudentCareTeam",
             "getProfessionalLink",
@@ -131,7 +140,15 @@ class OpenApiContractCompletenessTest {
             "searchAuditEvents",
 
             "generateStudentReport",
-            "exportStudentReportPdf"
+            "exportStudentReportPdf",
+
+
+            "listAccessibleStudents",
+            "listAccessibleLegalGuardianContacts",
+
+            "uploadMedicalDocument",
+            "listMedicalDocuments",
+            "downloadMedicalDocument"
     );
 
     @Autowired

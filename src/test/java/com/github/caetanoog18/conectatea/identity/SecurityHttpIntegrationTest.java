@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
         "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf=",
         "app.security.cors.allowed-origins=http://localhost:4200"
 })
 @AutoConfigureMockMvc

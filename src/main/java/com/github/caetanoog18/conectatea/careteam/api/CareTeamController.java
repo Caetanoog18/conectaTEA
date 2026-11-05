@@ -4,7 +4,12 @@ import com.github.caetanoog18.conectatea.careteam.api.dto.CreateProfessionalLink
 import com.github.caetanoog18.conectatea.careteam.api.dto.EndProfessionalLinkRequest;
 import com.github.caetanoog18.conectatea.careteam.api.dto.ProfessionalLinkResponse;
 import com.github.caetanoog18.conectatea.careteam.application.CareTeamService;
+import com.github.caetanoog18.conectatea.careteam.api.dto.ProfessionalOptionResponse;
+import com.github.caetanoog18.conectatea.shared.api.dto.PagedResponse;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -252,5 +257,48 @@ public class CareTeamController {
             @AuthenticationPrincipal Jwt jwt
     ) {
         return ResponseEntity.ok(careTeamService.end(linkId, request, jwt.getSubject()));
+    }
+
+    @Operation(
+            operationId = "listCareTeamProfessionals",
+            summary = "Listar profissionais disponíveis para seleção",
+            description = """
+                Lista contas ativas com perfil profissional elegível.
+                Exige administrador ou coordenador pedagógico ativo.
+                A primeira página é zero.
+                """,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Página de profissionais",
+                            useReturnTypeSchema = true
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Paginação inválida"
+                    )
+            }
+    )
+    @GetMapping("/care-team/professionals")
+    public ResponseEntity<PagedResponse<ProfessionalOptionResponse>> findProfessionals(
+            @RequestParam(defaultValue = "0")
+            @Min(0)
+            int page,
+
+            @RequestParam(defaultValue = "20")
+            @Min(1)
+            @Max(100)
+            int size,
+
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(
+                careTeamService.findProfessionals(
+                        page,
+                        size,
+                        jwt.getSubject()
+                )
+        );
     }
 }

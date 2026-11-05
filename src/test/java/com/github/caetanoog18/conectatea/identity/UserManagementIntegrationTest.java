@@ -34,7 +34,8 @@ import java.util.UUID;
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -58,7 +59,8 @@ class UserManagementIntegrationTest {
                   "fullName": "Maria da Silva",
                   "email": "maria@conectatea.com",
                   "password": "StrongPassword123!",
-                  "role": "TEACHER"
+                  "role": "TEACHER",
+                  "cpf": "52998224725"
                 }
                 """;
 
@@ -101,7 +103,8 @@ class UserManagementIntegrationTest {
                   "fullName": "Maria da Silva",
                   "email": "maria@conectatea.com",
                   "password": "StrongPassword123!",
-                  "role": "TEACHER"
+                  "role": "TEACHER",
+                  "cpf": "52998224725"
                 }
                 """;
 
@@ -120,7 +123,8 @@ class UserManagementIntegrationTest {
                   "fullName": "Maria da Silva",
                   "email": "maria@conectatea.com",
                   "password": "StrongPassword123!",
-                  "role": "TEACHER"
+                  "role": "TEACHER",
+                  "cpf": "52998224725"
                 }
                 """;
 
@@ -134,8 +138,7 @@ class UserManagementIntegrationTest {
                         patch("/api/users/{userId}/status", UUID.randomUUID())
                                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR")))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content("{}")
-                )
+                                .content("{}"))
                 .andExpect(status().isBadRequest());
     }
 }

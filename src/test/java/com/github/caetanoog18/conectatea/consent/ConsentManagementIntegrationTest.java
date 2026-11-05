@@ -19,6 +19,7 @@ import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
 import com.github.caetanoog18.conectatea.audit.domain.AuditOutcome;
 import com.github.caetanoog18.conectatea.audit.infrastructure.AuditEventRepository;
 
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,7 +52,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -310,7 +312,8 @@ class ConsentManagementIntegrationTest {
                         "Consent Administrator",
                         ADMIN_EMAIL,
                         "temporary-password-hash",
-                        UserRole.ADMINISTRATOR
+                        UserRole.ADMINISTRATOR,
+                        TestCpf.next()
                 )
         );
 
@@ -322,14 +325,15 @@ class ConsentManagementIntegrationTest {
                         "MAT-CONSENT-001",
                         2026,
                         "5º ano",
-                        "Turma B"
+                        "Turma B",
+                        TestCpf.next()
                 )
         );
 
         Guardian guardian = guardianRepository.saveAndFlush(
                 new Guardian(
                         "Maria da Silva",
-                        "52998224725",
+                        TestCpf.next(),
                         "maria-consent@conectatea.com",
                         "47999999999",
                         null

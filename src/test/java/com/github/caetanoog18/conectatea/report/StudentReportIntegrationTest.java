@@ -23,6 +23,7 @@ import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
 import com.github.caetanoog18.conectatea.report.api.dto.StudentReportResponse;
 import com.github.caetanoog18.conectatea.report.infrastructure.StudentReportPdfRenderer;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.openpdf.text.pdf.PdfReader;
 import org.openpdf.text.pdf.parser.PdfTextExtractor;
 import org.springframework.http.HttpStatus;
@@ -60,7 +61,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {
         "app.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -94,7 +96,7 @@ class StudentReportIntegrationTest {
         var guardian = guardianRepository.saveAndFlush(
                 new Guardian(
                         "Responsavel Teste",
-                        null,
+                        TestCpf.next(),
                         "guardian-" + UUID.randomUUID() + "@example.com",
                         "00000000000",
                         null
@@ -442,7 +444,8 @@ class StudentReportIntegrationTest {
                         "Usuario Teste",
                         "report-" + UUID.randomUUID() + "@example.com",
                         "temporary-password-hash",
-                        role
+                        role,
+                        TestCpf.next()
                 )
         );
     }
@@ -456,7 +459,8 @@ class StudentReportIntegrationTest {
                         "REPORT-" + UUID.randomUUID(),
                         2026,
                         "5 ano",
-                        "Turma Teste"
+                        "Turma Teste",
+                        TestCpf.next()
                 )
         );
     }

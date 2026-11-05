@@ -12,6 +12,7 @@ import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
 import com.github.caetanoog18.conectatea.audit.domain.AuditEvent;
 import com.github.caetanoog18.conectatea.audit.domain.AuditOutcome;
 import com.github.caetanoog18.conectatea.audit.infrastructure.AuditEventRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.springframework.test.web.servlet.MvcResult;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -330,7 +332,8 @@ class StudentGuardianManagementIntegrationTest {
                 "MAT-2026-001",
                 2026,
                 "5 ano",
-                "Turma A"
+                "Turma A",
+                TestCpf.next()
         );
         return studentRepository.saveAndFlush(student);
     }
@@ -339,8 +342,7 @@ class StudentGuardianManagementIntegrationTest {
         Guardian guardian = new Guardian(
                 fullName,
                 cpf,
-                fullName.toLowerCase()
-                        .replace(" ", ".") + "@example.com",
+                fullName.toLowerCase().replace(" ", ".") + "@example.com",
                 "(47) 99999-9999",
                 null
         );

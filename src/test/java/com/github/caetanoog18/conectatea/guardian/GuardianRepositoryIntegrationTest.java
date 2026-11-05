@@ -8,6 +8,7 @@ import com.github.caetanoog18.conectatea.guardian.infrastructure.GuardianReposit
 import com.github.caetanoog18.conectatea.guardian.infrastructure.StudentGuardianRepository;
 import com.github.caetanoog18.conectatea.student.domain.Student;
 import com.github.caetanoog18.conectatea.student.infrastructure.StudentRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         "app.security.jwt.secret=" +
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @Transactional
 class GuardianRepositoryIntegrationTest {
@@ -44,13 +46,14 @@ class GuardianRepositoryIntegrationTest {
                         "MAT-2026-001",
                         2026,
                         "5 ano",
-                        "Turma A"
+                        "Turma A",
+                        TestCpf.next()
                 )
         );
         Guardian guardian = guardianRepository.saveAndFlush(
                 new Guardian(
                         "Maria da Silva",
-                        "123.456.789-00",
+                        "529.982.247-25",
                         "MARIA@EXAMPLE.COM",
                         "(47) 99999-9999",
                         null
@@ -70,19 +73,14 @@ class GuardianRepositoryIntegrationTest {
                 );
 
         assertThat(guardian.getId()).isNotNull();
-        assertThat(guardian.getCpf()).isEqualTo("12345678900");
-        assertThat(guardian.getEmail())
-                .isEqualTo("maria@example.com");
-        assertThat(guardian.getPhone())
-                .isEqualTo("47999999999");
+        assertThat(guardian.getCpf()).isEqualTo("52998224725");
+        assertThat(guardian.getEmail()).isEqualTo("maria@example.com");
+        assertThat(guardian.getPhone()).isEqualTo("47999999999");
 
         assertThat(link.getId()).isNotNull();
-        assertThat(link.getStudent().getId())
-                .isEqualTo(student.getId());
-        assertThat(link.getGuardian().getId())
-                .isEqualTo(guardian.getId());
-        assertThat(link.getRelationship())
-                .isEqualTo(GuardianRelationship.MOTHER);
+        assertThat(link.getStudent().getId()).isEqualTo(student.getId());
+        assertThat(link.getGuardian().getId()).isEqualTo(guardian.getId());
+        assertThat(link.getRelationship()).isEqualTo(GuardianRelationship.MOTHER);
         assertThat(link.isLegalGuardian()).isTrue();
         assertThat(link.isPrimaryContact()).isTrue();
     }

@@ -4,6 +4,7 @@ import com.github.caetanoog18.conectatea.TestcontainersConfiguration;
 import com.github.caetanoog18.conectatea.identity.domain.User;
 import com.github.caetanoog18.conectatea.identity.domain.UserRole;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
+import com.github.caetanoog18.conectatea.support.TestCpf;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,7 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "app.security.jwt.issuer=conectatea-api",
         "app.bootstrap.admin.email=",
-        "app.bootstrap.admin.password="
+        "app.bootstrap.admin.password=",
+        "app.bootstrap.admin.cpf="
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -122,11 +124,7 @@ class CurrentUserJwtIntegrationTest {
         String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
 
         mockMvc.perform(
-                get("/api/auth/me")
-                        .header(
-                                HttpHeaders.AUTHORIZATION,
-                                "Bearer " + accessToken
-                        ))
+                get("/api/auth/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -140,9 +138,7 @@ class CurrentUserJwtIntegrationTest {
         userRepository.saveAndFlush(user);
 
         mockMvc.perform(
-                get("/api/auth/me").header(
-                                HttpHeaders.AUTHORIZATION,
-                        "Bearer " + oldToken))
+                get("/api/auth/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + oldToken))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -152,7 +148,8 @@ class CurrentUserJwtIntegrationTest {
                         "Professor Teste JWT",
                         UUID.randomUUID() + "@example.com",
                         "unused-password-hash",
-                        UserRole.TEACHER
+                        UserRole.TEACHER,
+                        TestCpf.next()
                 ));
     }
 

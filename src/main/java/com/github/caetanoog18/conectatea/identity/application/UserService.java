@@ -11,6 +11,9 @@ import com.github.caetanoog18.conectatea.identity.domain.User;
 import com.github.caetanoog18.conectatea.identity.infrastructure.UserRepository;
 import com.github.caetanoog18.conectatea.audit.application.AuditedOperation;
 import com.github.caetanoog18.conectatea.audit.domain.AuditAction;
+import com.github.caetanoog18.conectatea.shared.domain.Cpf;
+import com.github.caetanoog18.conectatea.shared.domain.CpfAlreadyInUseException;
+import com.github.caetanoog18.conectatea.shared.domain.RegistrationConflictException;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -56,18 +59,26 @@ public class UserService {
             throw new EmailAlreadyInUseException();
         }
 
+        String cpf = Cpf.normalize(request.cpf());
+
+        if (userRepository.existsByCpf(cpf)) {
+            throw new CpfAlreadyInUseException();
+        }
+
         User user = new User(
                 request.fullName().trim(),
                 request.email(),
                 passwordEncoder.encode(request.password()),
-                request.role()
+                request.role(),
+                cpf
         );
 
         try {
-            User savedUser = userRepository.saveAndFlush(user);
-            return UserResponse.from(savedUser);
+            return UserResponse.from(
+                    userRepository.saveAndFlush(user)
+            );
         } catch (DataIntegrityViolationException exception) {
-            throw new EmailAlreadyInUseException();
+            throw new RegistrationConflictException();
         }
     }
 

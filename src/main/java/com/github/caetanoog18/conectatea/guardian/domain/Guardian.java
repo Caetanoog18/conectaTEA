@@ -1,5 +1,6 @@
 package com.github.caetanoog18.conectatea.guardian.domain;
 
+import com.github.caetanoog18.conectatea.shared.domain.Cpf;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,7 +27,7 @@ public class Guardian {
     @Column(name = "full_name", nullable = false, length = 120)
     private String fullName;
 
-    @Column(length = 11)
+    @Column(nullable = false, length = 11)
     private String cpf;
 
     @Column(length = 254)
@@ -57,7 +58,7 @@ public class Guardian {
             UUID userId
     ) {
         this.fullName = fullName.trim();
-        this.cpf = normalizeDigits(cpf);
+        this.cpf = Cpf.normalize(cpf);
         this.email = normalizeEmail(email);
         this.phone = normalizeDigits(phone);
         this.userId = userId;

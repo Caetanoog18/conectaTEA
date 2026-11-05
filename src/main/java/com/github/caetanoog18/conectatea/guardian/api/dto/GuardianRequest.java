@@ -19,11 +19,12 @@ public record GuardianRequest(
 
         @Schema(
                 description = """
-                        CPF opcional. Quando informado, deve ser válido.
+                        CPF obrigatório. Quando informado, deve ser válido.
                         Pode ser enviado com ou sem pontuação.
                         """,
                 example = "52998224725"
         )
+        @NotBlank(message = "CPF is required")
         @CPF(message = "CPF must be valid")
         String cpf,
 

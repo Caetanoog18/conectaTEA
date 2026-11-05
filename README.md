@@ -45,6 +45,12 @@ observações, linha do tempo, auditoria e relatórios.
 - Docker
 - Docker Compose
 
+
+## Executar o sistema completo
+
+Para iniciar o frontend Angular, a API e o PostgreSQL com Docker Compose,
+consulte o [guia de execução integrada](docs/execucao-integrada.md).
+
 O Maven Wrapper já está incluído no projeto.
 
 ## Banco de dados
